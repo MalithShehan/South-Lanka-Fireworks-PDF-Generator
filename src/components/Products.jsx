@@ -56,7 +56,7 @@ const Toast = ({ show, data, onClose }) => {
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 100, scale: 0.95 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed top-4 right-4 z-[9999] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[320px] sm:max-w-[400px]"
+          className="fixed top-4 right-4 z-[9999] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[340px] sm:max-w-[420px]"
         >
           <div className={`relative overflow-hidden rounded-xl shadow-2xl border ${
             isSuccess 
@@ -109,12 +109,12 @@ const Toast = ({ show, data, onClose }) => {
                           className="w-8 h-8 rounded object-cover"
                         />
                       )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-gray-800 truncate">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-800 leading-tight">
                           {data.itemName}
                         </p>
                         {data.itemSize && (
-                          <p className="text-xs text-gray-500">{data.itemSize}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{data.itemSize}</p>
                         )}
                       </div>
                       {data.itemPrice && (
