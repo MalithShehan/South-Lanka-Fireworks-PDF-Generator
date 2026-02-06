@@ -47,15 +47,22 @@ const CustomPackageEditor = ({
   const renderTableRows = () =>
     items.map((item, idx) => (
       <tr key={idx} className="border-t hover:bg-indigo-50/50 transition group">
-        <td className="p-2 sm:p-2.5 align-middle">
-          <input
-            type="text"
-            value={item.name || ""}
-            onChange={(event) => onNameChange(item, event.target.value)}
-            className="w-full border border-gray-200 rounded-lg p-1.5 sm:p-2 text-left text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            aria-label="Item name"
-            placeholder="Item name"
-          />
+        <td className="p-1.5 sm:p-2.5 align-middle">
+          <div className="flex flex-col gap-1">
+            <input
+              type="text"
+              value={item.name || ""}
+              onChange={(event) => onNameChange(item, event.target.value)}
+              className="w-full border border-gray-200 rounded-lg p-1.5 sm:p-2 text-left text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              aria-label="Item name"
+              placeholder="Item name"
+            />
+            {/* Show size and price on mobile under name */}
+            <div className="flex items-center gap-2 text-xs text-gray-500 sm:hidden">
+              {item.size && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.size}</span>}
+              <span>Rs.{(parseFloat(item.price) || 0).toLocaleString()}</span>
+            </div>
+          </div>
         </td>
         <td className="p-2 sm:p-2.5 align-middle hidden sm:table-cell">
           <input
@@ -67,9 +74,9 @@ const CustomPackageEditor = ({
             placeholder="Size"
           />
         </td>
-        <td className="p-2 sm:p-2.5 align-middle">
+        <td className="p-2 sm:p-2.5 align-middle hidden sm:table-cell">
           <div className="flex items-center justify-center gap-1">
-            <span className="text-xs text-gray-500 mr-1 hidden sm:inline">Rs.</span>
+            <span className="text-xs text-gray-500 mr-1">Rs.</span>
             <input
               type="number"
               min="0"
@@ -81,15 +88,15 @@ const CustomPackageEditor = ({
             />
           </div>
         </td>
-        <td className="p-2 sm:p-2.5 align-middle">
-          <div className="flex items-center justify-center gap-1">
+        <td className="p-1 sm:p-2.5 align-middle">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1">
             <button
               onClick={() => handleDecrement(item)}
               disabled={item.quantity <= 1}
-              className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition"
+              className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition"
               aria-label="Decrease quantity"
             >
-              <Minus size={12} className="text-gray-600" />
+              <Minus size={10} className="text-gray-600 sm:w-3 sm:h-3" />
             </button>
             <input
               type="number"
@@ -99,28 +106,28 @@ const CustomPackageEditor = ({
                 const parsed = parseInt(event.target.value, 10);
                 onQtyChange(item, Number.isNaN(parsed) || parsed < 1 ? 1 : parsed);
               }}
-              className="w-10 sm:w-12 border border-gray-200 rounded-lg p-1 sm:p-1.5 text-center text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-8 sm:w-12 border border-gray-200 rounded-lg p-0.5 sm:p-1.5 text-center text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
             <button
               onClick={() => handleIncrement(item)}
-              className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center transition"
+              className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center transition"
               aria-label="Increase quantity"
             >
-              <Plus size={12} className="text-indigo-600" />
+              <Plus size={10} className="text-indigo-600 sm:w-3 sm:h-3" />
             </button>
           </div>
         </td>
-        <td className="p-2 sm:p-2.5 text-right font-semibold text-pink-600 text-xs sm:text-sm">
-          Rs.{((parseFloat(item.price) || 0) * item.quantity).toLocaleString()}
+        <td className="p-1 sm:p-2.5 text-right font-semibold text-pink-600 text-[10px] sm:text-sm whitespace-nowrap">
+          <span className="hidden sm:inline">Rs.</span>{((parseFloat(item.price) || 0) * item.quantity).toLocaleString()}
         </td>
-        <td className="p-2 sm:p-2.5 text-center">
+        <td className="p-1 sm:p-2.5 text-center">
           <button
             onClick={() => onRemoveItem(item)}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition mx-auto group-hover:bg-red-100"
+            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition mx-auto group-hover:bg-red-100"
             aria-label="Remove item"
             title="Remove item"
           >
-            <Trash2 size={14} className="text-red-500" />
+            <Trash2 size={12} className="text-red-500 sm:w-3.5 sm:h-3.5" />
           </button>
         </td>
       </tr>
@@ -201,20 +208,21 @@ const CustomPackageEditor = ({
               <table className="w-full border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-gradient-to-r from-indigo-50 to-pink-50">
-                    <th className="p-2 sm:p-3 text-left text-indigo-700 font-semibold">Item Name</th>
+                    <th className="p-2 sm:p-3 text-left text-indigo-700 font-semibold min-w-[120px] sm:min-w-[180px]">Item Name</th>
                     <th className="p-2 sm:p-3 text-left text-indigo-700 font-semibold hidden sm:table-cell">Size</th>
-                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold">Price</th>
-                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold">Qty</th>
+                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold hidden sm:table-cell">Price</th>
+                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold w-20 sm:w-auto">Qty</th>
                     <th className="p-2 sm:p-3 text-right text-indigo-700 font-semibold">Total</th>
-                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold w-12"></th>
+                    <th className="p-2 sm:p-3 text-center text-indigo-700 font-semibold w-10 sm:w-12"></th>
                   </tr>
                 </thead>
                 <tbody>{renderTableRows()}</tbody>
                 <tfoot>
                   <tr className="bg-gray-50 border-t-2 border-gray-200">
-                    <td colSpan="4" className="p-3 text-right font-semibold text-gray-700">Subtotal:</td>
-                    <td className="p-3 text-right font-bold text-lg text-gray-800">Rs.{(subTotal || 0).toLocaleString()}</td>
-                    <td></td>
+                    <td colSpan="2" className="p-2 sm:p-3 text-right font-semibold text-gray-700 text-xs sm:text-sm sm:hidden">Subtotal:</td>
+                    <td colSpan="4" className="p-3 text-right font-semibold text-gray-700 hidden sm:table-cell">Subtotal:</td>
+                    <td className="p-2 sm:p-3 text-right font-bold text-sm sm:text-lg text-gray-800">Rs.{(subTotal || 0).toLocaleString()}</td>
+                    <td className="hidden sm:table-cell"></td>
                   </tr>
                 </tfoot>
               </table>
