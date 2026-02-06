@@ -306,7 +306,7 @@ const CustomPackageEditor = ({
                       >
                         {includeEventDate && <Check size={10} />}
                       </span>
-                      <span className="font-medium whitespace-nowrap">Add to PDF</span>
+                      <span className="font-medium whitespace-nowrap">Event Date</span>
                     </label>
                   </div>
                 </div>
