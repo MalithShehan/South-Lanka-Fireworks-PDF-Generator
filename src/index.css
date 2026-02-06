@@ -3,8 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Critical CSS for faster initial paint */
+:root {
+  --primary-color: #4f46e5;
+  --secondary-color: #ec4899;
+}
+
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   background: 
     radial-gradient(
       circle at 15% 85%, rgba(255, 223, 99, 0.4) 0%, rgba(255, 223, 99, 0) 60%
@@ -22,17 +28,8 @@ body {
   min-height: 100vh;
   background-attachment: fixed;
   background-size: cover;
-  transition: background 0.5s ease;
-}
-
-@keyframes float-bg {
-  0% { background-position: 15% 85%, 45% 25%, 80% 80%; }
-  50% { background-position: 18% 82%, 48% 28%, 83% 77%; }
-  100% { background-position: 15% 85%, 45% 25%, 80% 80%; }
-}
-
-body {
-  animation: float-bg 10s ease-in-out infinite alternate;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 

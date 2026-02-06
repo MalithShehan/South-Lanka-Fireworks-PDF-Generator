@@ -94,7 +94,7 @@ const items = [
     hoverColor: "hover:shadow-gray-400/70",
   },
   {
-    id: 9,
+    id: 18,
     name: "Multi Color Shell",
     image: "/assets/MultiColorShell2.jpg",
     video: "/assets/MultiColorShell2.mp4",
