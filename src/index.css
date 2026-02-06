@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: 
+    radial-gradient(
+      circle at 15% 85%, rgba(255, 223, 99, 0.4) 0%, rgba(255, 223, 99, 0) 60%
+    ),
+    radial-gradient(
+      circle at 45% 25%, rgba(255, 88, 88, 0.35) 0%, rgba(255, 88, 88, 0) 60%
+    ),
+    radial-gradient(
+      circle at 80% 80%, rgba(6, 127, 179, 0.35) 0%, rgba(6, 127, 179, 0) 60%
+    ),
+    linear-gradient(to bottom right, #ffffff, #f9fafb, #f1f5f9);
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-attachment: fixed;
+  background-size: cover;
+  transition: background 0.5s ease;
+}
+
+@keyframes float-bg {
+  0% { background-position: 15% 85%, 45% 25%, 80% 80%; }
+  50% { background-position: 18% 82%, 48% 28%, 83% 77%; }
+  100% { background-position: 15% 85%, 45% 25%, 80% 80%; }
+}
+
+body {
+  animation: float-bg 10s ease-in-out infinite alternate;
+}
+
+
+
+
+h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-gray-800;
+}
+
+p {
+    @apply text-base md:text-lg tracking-tight leading-relaxed;
+}
+
+span {
+    @apply text-blue-400;
+}
+
+/* Utility Classes */
+.shine-effect {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(circle, rgba(5, 48, 139, 0.25), transparent 70%);
+}
+
+.bg-primary-color {
+    @apply bg-gradient-to-r from-yellow-400 via-pink-500 to-red-500;
+}
+
+.timeline-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, #ff0000, #ffff00, #00ffff); /* Red → Yellow → Cyan */
+}
+
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.5s cubic-bezier(0.25, 1.2, 0.5, 1) forwards;
+}
