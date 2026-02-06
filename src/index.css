@@ -30,9 +30,13 @@ body {
   background-size: cover;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
 
 
 h1, h2, h3, h4, h5, h6 {
@@ -41,10 +45,6 @@ h1, h2, h3, h4, h5, h6 {
 
 p {
     @apply text-base md:text-lg tracking-tight leading-relaxed;
-}
-
-span {
-    @apply text-blue-400;
 }
 
 /* Utility Classes */
