@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import items from "./Items";
 import jsPDF from "jspdf";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Check, X } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import AddCustomItemModal from "./AddCustomItemModal";
@@ -16,6 +16,7 @@ const productVariants = {
 
 const HISTORY_STORAGE_KEY = "slf-quotation-history";
 const HISTORY_LIMIT = 1000;
+const TOAST_DURATION = 3000;
 const BANK_DETAILS = [
   { label: "Acc No", value: "8011371317" },
   { label: "Bank Name", value: "Commercial Bank" },
@@ -23,10 +24,140 @@ const BANK_DETAILS = [
   { label: "Acc Holder Name", value: "J.W.C.Thushara" },
 ];
 
+// Professional Toast Component
+const Toast = ({ show, data, onClose }) => {
+  const [progress, setProgress] = useState(100);
+
+  useEffect(() => {
+    if (!show) {
+      setProgress(100);
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        const newVal = prev - (100 / (TOAST_DURATION / 50));
+        return newVal <= 0 ? 0 : newVal;
+      });
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [show]);
+
+  if (!data) return null;
+
+  const isSuccess = data.type !== 'error';
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <Motion.div
+          initial={{ opacity: 0, x: 100, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 100, scale: 0.95 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="fixed top-4 right-4 z-[9999] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[320px] sm:max-w-[400px]"
+        >
+          <div className={`relative overflow-hidden rounded-xl shadow-2xl border ${
+            isSuccess 
+              ? 'bg-white border-green-200' 
+              : 'bg-white border-red-200'
+          }`}>
+            {/* Progress bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
+              <Motion.div 
+                className={`h-full ${isSuccess ? 'bg-green-500' : 'bg-red-500'}`}
+                initial={{ width: '100%' }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.05 }}
+              />
+            </div>
+            
+            <div className="p-4 pt-5">
+              <div className="flex items-start gap-3">
+                {/* Icon */}
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                  isSuccess 
+                    ? 'bg-green-100' 
+                    : 'bg-red-100'
+                }`}>
+                  {isSuccess ? (
+                    <Check className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <X className="w-5 h-5 text-red-600" />
+                  )}
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className={`font-semibold text-sm ${
+                    isSuccess ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {data.title || (isSuccess ? 'Added to Cart!' : 'Error')}
+                  </p>
+                  {data.message && (
+                    <p className="text-gray-600 text-sm mt-0.5 line-clamp-2">
+                      {data.message}
+                    </p>
+                  )}
+                  {data.itemName && (
+                    <div className="flex items-center gap-2 mt-2 p-2 bg-gray-50 rounded-lg">
+                      {data.itemImage && (
+                        <img 
+                          src={data.itemImage} 
+                          alt="" 
+                          className="w-8 h-8 rounded object-cover"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-800 truncate">
+                          {data.itemName}
+                        </p>
+                        {data.itemSize && (
+                          <p className="text-xs text-gray-500">{data.itemSize}</p>
+                        )}
+                      </div>
+                      {data.itemPrice && (
+                        <span className="ml-auto text-xs font-semibold text-pink-600 whitespace-nowrap">
+                          Rs.{data.itemPrice.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Close button */}
+                <button
+                  onClick={onClose}
+                  className="flex-shrink-0 w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+              
+              {/* Cart count badge */}
+              {data.cartCount !== undefined && data.cartCount > 0 && (
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">Items in cart</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    {data.cartCount}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const Products = () => {
   const [customPackageItems, setCustomPackageItems] = useState([]);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastData, setToastData] = useState(null);
   const [pdfName, setPdfName] = useState("");
   const [discount, setDiscount] = useState("");
   const [advance, setAdvance] = useState("");
@@ -135,6 +266,9 @@ const Products = () => {
     const exists = customPackageItems.find(
       (i) => i.id === item.id && i.size === sizeObj.size
     );
+    
+    let newCartCount = cartCount + 1;
+    
     if (exists) {
       setCustomPackageItems(
         customPackageItems.map((i) =>
@@ -157,9 +291,18 @@ const Products = () => {
       ]);
     }
 
-    setToastMessage(`${item.name} (${sizeObj.size}) added to cart!`);
+    // Show professional toast notification
+    setToastData({
+      type: 'success',
+      title: 'Added to Cart!',
+      itemName: item.name,
+      itemSize: sizeObj.size || 'Standard',
+      itemPrice: sizeObj.price,
+      itemImage: imageSource,
+      cartCount: newCartCount,
+    });
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
+    setTimeout(() => setShowToast(false), TOAST_DURATION);
   };
 
   const removeFromCustomPackage = (item) => {
@@ -168,6 +311,26 @@ const Products = () => {
         (i) => !(i.id === item.id && i.size === item.size)
       )
     );
+  };
+
+  const handleClearCart = () => {
+    if (!customPackageItems.length) return;
+    const shouldClear =
+      typeof window === "undefined" ? true : window.confirm("Clear all items from your cart?");
+    if (shouldClear) {
+      setCustomPackageItems([]);
+      setPdfName("");
+      setInvoiceTo("");
+      setDiscount("");
+      setAdvance("");
+      setToastData({
+        type: 'success',
+        title: 'Cart Cleared',
+        message: 'All items have been removed from your cart',
+      });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), TOAST_DURATION);
+    }
   };
 
   const handleClearHistory = () => {
@@ -216,9 +379,14 @@ const Products = () => {
       typeof bankToggle === "boolean" ? bankToggle : true
     );
 
-    setToastMessage("Quotation loaded for editing");
+    setToastData({
+      type: 'success',
+      title: 'Quotation Loaded',
+      message: `"${quote.pdfName}" is ready for editing`,
+      cartCount: itemsToLoad.reduce((sum, item) => sum + (item.quantity || 0), 0),
+    });
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 2200);
+    setTimeout(() => setShowToast(false), TOAST_DURATION);
 
     document
       .getElementById("custom-package")
@@ -228,9 +396,13 @@ const Products = () => {
   const handleAddCustomItem = ({ name, size, price, qty }) => {
     const trimmedName = (name || "").trim();
     if (!trimmedName) {
-      setToastMessage("Please enter an item name");
+      setToastData({
+        type: 'error',
+        title: 'Missing Item Name',
+        message: 'Please enter a name for your custom item',
+      });
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 2200);
+      setTimeout(() => setShowToast(false), TOAST_DURATION);
       return false;
     }
 
@@ -262,10 +434,18 @@ const Products = () => {
       // ignore preview grid injection errors
     }
 
-    setToastMessage(`${trimmedName} added to cart!`);
+    setToastData({
+      type: 'success',
+      title: 'Custom Item Added!',
+      itemName: trimmedName,
+      itemSize: cleanedSize || 'Custom',
+      itemPrice: numericPrice,
+      itemImage: placeholderImage,
+      cartCount: cartCount + numericQty,
+    });
     setShowToast(true);
     setShowAddModal(false);
-    setTimeout(() => setShowToast(false), 2200);
+    setTimeout(() => setShowToast(false), TOAST_DURATION);
     return true;
   };
 
@@ -776,7 +956,7 @@ const Products = () => {
   return (
     <>
       <section
-        className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-pink-50 py-10 px-3 md:px-10"
+        className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-pink-50 py-6 sm:py-10 px-3 sm:px-4 md:px-10"
         id="products"
       >
         <Helmet>
@@ -785,7 +965,7 @@ const Products = () => {
 
         {cartCount > 0 && (
           <Motion.div
-            className="fixed top-20 right-5 z-50 flex items-center gap-2 bg-white/90 shadow-lg backdrop-blur-md px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition"
+            className="fixed top-4 sm:top-20 right-3 sm:right-5 z-50 flex items-center gap-2 bg-white/95 shadow-lg backdrop-blur-md px-3 sm:px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition border border-indigo-100"
             onClick={() =>
               document
                 .getElementById("custom-package")
@@ -794,32 +974,19 @@ const Products = () => {
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <ShoppingCart size={20} className="text-indigo-600" />
-            <span className="font-semibold text-indigo-700 text-base">
+            <ShoppingCart size={18} className="text-indigo-600" />
+            <span className="font-semibold text-indigo-700 text-sm sm:text-base">
               {cartCount}
             </span>
           </Motion.div>
         )}
 
-        <AnimatePresence>
-          {showToast && (
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] w-full flex justify-center px-4 pointer-events-none">
-              <Motion.div
-                initial={{ opacity: 0, y: -18 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -18 }}
-                transition={{ duration: 0.28, ease: "easeOut" }}
-                className="bg-green-600 text-white font-medium rounded-xl shadow-lg text-center px-5 py-3 w-full sm:w-auto max-w-md flex items-center justify-center pointer-events-auto"
-              >
-                <span className="flex items-center gap-2 text-white">
-                  <span className="text-white">
-                    {toastMessage || "Added to cart ✅"}
-                  </span>
-                </span>
-              </Motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        {/* Professional Toast Notification */}
+        <Toast 
+          show={showToast} 
+          data={toastData} 
+          onClose={() => setShowToast(false)} 
+        />
 
         <AddCustomItemModal
           isOpen={showAddModal}
@@ -827,13 +994,40 @@ const Products = () => {
           onAddItem={handleAddCustomItem}
         />
 
-        <div className="max-w-5xl mx-auto text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-gray-800 mb-1 tracking-tight">
-            💥 Explore Our Fireworks
-          </h2>
-          <p className="text-gray-600 text-base">
-            Select your favorite fireworks and create your dream package!
+        {/* Hero Header */}
+        <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-pink-100 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <span>🎆</span>
+            <span>South Lanka Fireworks Invoice Generator</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 mb-3 tracking-tight">
+            Create Your Perfect Quotation
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
+            Browse our fireworks, select quantities, and generate professional PDF invoices in seconds.
           </p>
+          
+          {/* Quick Stats */}
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mt-6">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span className="text-indigo-600 font-bold">{products.length}</span>
+              </div>
+              <span className="text-gray-600">Products</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
+                <span className="text-pink-600 font-bold">{cartCount}</span>
+              </div>
+              <span className="text-gray-600">In Cart</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-green-600 font-bold">{quoteHistory.length}</span>
+              </div>
+              <span className="text-gray-600">Saved</span>
+            </div>
+          </div>
         </div>
 
         <ProductGrid
@@ -850,6 +1044,7 @@ const Products = () => {
           onPriceChange={updateCustomPackagePrice}
           onQtyChange={updateCustomPackageQty}
           onRemoveItem={removeFromCustomPackage}
+          onClearCart={handleClearCart}
           pdfName={pdfName}
           onPdfNameChange={setPdfName}
           invoiceTo={invoiceTo}
@@ -867,6 +1062,7 @@ const Products = () => {
           onDiscountChange={setDiscount}
           advance={advance}
           onAdvanceChange={setAdvance}
+          subTotal={subTotal}
           totalAfterDiscount={totalAfterDiscount}
           balanceDue={balanceDue}
           onGenerateReport={generateReport}
@@ -884,6 +1080,9 @@ const Products = () => {
         formatDateDDMMYYYY={formatDateDDMMYYYY}
         formatDateTimeReadable={formatDateTimeReadable}
       />
+      
+      {/* Footer spacing */}
+      <div className="h-8 sm:h-12" aria-hidden="true" />
     </>
   );
 };
