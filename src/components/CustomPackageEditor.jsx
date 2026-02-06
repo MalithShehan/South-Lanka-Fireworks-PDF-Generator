@@ -48,7 +48,7 @@ const CustomPackageEditor = ({
     items.map((item, idx) => (
       <tr key={idx} className="border-t hover:bg-indigo-50/50 transition group">
         <td className="p-1.5 sm:p-2.5 align-middle">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <input
               type="text"
               value={item.name || ""}
@@ -57,10 +57,28 @@ const CustomPackageEditor = ({
               aria-label="Item name"
               placeholder="Item name"
             />
-            {/* Show size and price on mobile under name */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 sm:hidden">
-              {item.size && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.size}</span>}
-              <span>Rs.{(parseFloat(item.price) || 0).toLocaleString()}</span>
+            {/* Editable size and price on mobile under name */}
+            <div className="flex items-center gap-1.5 sm:hidden">
+              <input
+                type="text"
+                value={item.size || ""}
+                onChange={(event) => onSizeChange(item, event.target.value)}
+                className="flex-1 min-w-0 border border-gray-200 rounded-md px-1.5 py-1 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                aria-label="Item size"
+                placeholder="Size"
+              />
+              <div className="flex items-center gap-0.5">
+                <span className="text-[10px] text-gray-500">Rs.</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={item.price}
+                  onChange={(event) => onPriceChange(item, event.target.value)}
+                  className="w-16 border border-gray-200 rounded-md px-1.5 py-1 text-right text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="0"
+                />
+              </div>
             </div>
           </div>
         </td>
