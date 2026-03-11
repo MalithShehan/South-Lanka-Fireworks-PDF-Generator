@@ -15,13 +15,16 @@ const QuoteHistory = ({
   const hasHistory = quoteHistory.length > 0;
 
   return (
-    <div className="w-full max-w-6xl mx-auto mt-6 sm:mt-8 px-3 sm:px-4 overflow-hidden">
+    <div className="w-full max-w-6xl mx-auto mt-0 px-3 sm:px-4 overflow-hidden pb-8 sm:pb-12"
+      style={{ background: "linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%)" }}
+    >
       <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 p-3 sm:p-4 md:p-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10" />
+          <div className="flex flex-col gap-3 sm:gap-4 relative">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/20">
                 <History size={18} className="text-white" />
               </div>
               <div className="min-w-0">

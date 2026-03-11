@@ -1,76 +1,115 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Critical CSS for faster initial paint */
 :root {
-  --primary-color: #4f46e5;
-  --secondary-color: #ec4899;
+  --primary: #4f46e5;
+  --primary-dark: #3730a3;
+  --accent: #ec4899;
+  --accent-dark: #be185d;
+  --surface: #ffffff;
+  --surface-dim: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --shadow-color: 224 71% 4%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
 }
 
 body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  background: 
-    radial-gradient(
-      circle at 15% 85%, rgba(255, 223, 99, 0.4) 0%, rgba(255, 223, 99, 0) 60%
-    ),
-    radial-gradient(
-      circle at 45% 25%, rgba(255, 88, 88, 0.35) 0%, rgba(255, 88, 88, 0) 60%
-    ),
-    radial-gradient(
-      circle at 80% 80%, rgba(6, 127, 179, 0.35) 0%, rgba(6, 127, 179, 0) 60%
-    ),
-    linear-gradient(to bottom right, #ffffff, #f9fafb, #f1f5f9);
-  color: #1f2937;
+  background: var(--surface-dim);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-attachment: fixed;
-  background-size: cover;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  line-height: 1.6;
 }
 
 #root {
   overflow-x: hidden;
   max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-
 h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-gray-800;
+  @apply font-bold text-gray-900;
+  line-height: 1.2;
 }
 
 p {
-    @apply text-base md:text-lg tracking-tight leading-relaxed;
+  @apply text-base tracking-tight leading-relaxed;
+  color: var(--text-secondary);
+}
+
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(79, 70, 229, 0.15);
+  color: var(--text-primary);
+}
+
+/* Smooth image loading */
+img {
+  content-visibility: auto;
 }
 
 /* Utility Classes */
 .shine-effect {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 1;
-    background: radial-gradient(circle, rgba(5, 48, 139, 0.25), transparent 70%);
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.12), transparent 70%);
 }
 
 .bg-primary-color {
-    @apply bg-gradient-to-r from-yellow-400 via-pink-500 to-red-500;
+  @apply bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600;
 }
 
-.timeline-line::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(to bottom, #ff0000, #ffff00, #00ffff); /* Red → Yellow → Cyan */
-}
-
+/* Animations */
 @keyframes slide-in {
   0% {
     opacity: 0;
@@ -86,6 +125,106 @@ p {
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(79, 70, 229, 0);
+  }
+}
+
 .animate-slide-in {
   animation: slide-in 0.5s cubic-bezier(0.25, 1.2, 0.5, 1) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Number input arrows hide on small elements */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Tabular nums for prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.12), 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+}
+
+/* Smooth appear animation for sections */
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-in {
+  animation: float-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Button press effect */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Smooth transition for all interactive elements */
+a, button, input, select, textarea {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* Better placeholder styling */
+::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }

@@ -19,12 +19,14 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     cssMinify: true,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
           pdf: ['jspdf'],
-          motion: ['framer-motion']
+          motion: ['framer-motion'],
+          icons: ['lucide-react']
         }
       }
     },

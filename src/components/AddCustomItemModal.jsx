@@ -102,33 +102,33 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" onClick={onClose} />
 
       <Motion.div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-item-title"
-        initial={{ opacity: 0, scale: 0.98, y: -8 }}
+        initial={{ opacity: 0, scale: 0.95, y: -12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: -8 }}
-        transition={{ duration: 0.18 }}
-        className="relative bg-white rounded-lg shadow-lg w-full max-w-xs sm:max-w-md md:max-w-2xl p-4 sm:p-6 z-10 mx-4"
+        exit={{ opacity: 0, scale: 0.95, y: -12 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-md md:max-w-2xl p-5 sm:p-7 z-10 mx-4 border border-gray-100"
       >
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h4 id="add-item-title" className="text-lg font-semibold text-gray-900">
+              <h4 id="add-item-title" className="text-lg font-bold text-gray-900">
                 Add Custom Item
               </h4>
               <p className="text-sm text-gray-500 mt-1">
-                Quickly add a bespoke firework or service to your quotation.
+                Add a bespoke firework or service to your quotation.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-gray-200 p-2 text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              className="rounded-xl border border-gray-200 p-2 text-gray-400 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all"
               aria-label="Close modal"
             >
               <X size={16} />
@@ -145,7 +145,7 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
                   placeholder="Sparkler kit"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="mt-1.5 border border-gray-200 rounded-xl p-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   aria-label="Custom item name"
                   required
                 />
@@ -158,7 +158,7 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
                   placeholder="Large display"
                   value={size}
                   onChange={(event) => setSize(event.target.value)}
-                  className="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="mt-1.5 border border-gray-200 rounded-xl p-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   aria-label="Custom item size"
                 />
               </label>
@@ -172,7 +172,7 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
                     min="0"
                     value={price}
                     onChange={(event) => setPrice(event.target.value)}
-                    className="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="mt-1.5 border border-gray-200 rounded-xl p-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     aria-label="Custom item price"
                   />
                 </label>
@@ -185,17 +185,17 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
                     min="1"
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}
-                    className="mt-1 border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="mt-1.5 border border-gray-200 rounded-xl p-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     aria-label="Custom item quantity"
                   />
                 </label>
               </div>
             </div>
 
-            <div className="p-4 border rounded-lg bg-gray-50">
+            <div className="p-4 border border-gray-100 rounded-xl bg-gradient-to-br from-gray-50 to-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white flex items-center justify-center font-bold text-lg">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
                     {name.slice(0, 2).toUpperCase() || "+"}
                   </div>
                   <div>
@@ -205,7 +205,7 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
                     <div className="text-sm text-gray-500">{size || "Size"}</div>
                   </div>
                 </div>
-                <div className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">Preview</div>
+                <div className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md font-semibold uppercase tracking-wider">Preview</div>
               </div>
 
               <dl className="mt-4 space-y-2 text-sm text-gray-600">
@@ -225,14 +225,14 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row-reverse gap-3 sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row-reverse gap-3 sm:items-center sm:justify-between pt-2">
             <button
               type="submit"
               disabled={isAddDisabled}
-              className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white ${
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-white font-medium transition-all ${
                 isAddDisabled
-                  ? "bg-indigo-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
+                  ? "bg-indigo-300 cursor-not-allowed"
+                  : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg"
               }`}
             >
               <ShoppingCart size={16} className="text-white" />
@@ -241,7 +241,7 @@ const AddCustomItemModal = ({ isOpen, onClose, onAddItem }) => {
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-2.5 text-gray-600 hover:bg-gray-50 hover:border-gray-300 font-medium transition-all"
             >
               Cancel
             </button>

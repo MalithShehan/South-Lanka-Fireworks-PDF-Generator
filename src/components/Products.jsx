@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import items from "./Items";
 import jsPDF from "jspdf";
-import { ShoppingCart, Check, X } from "lucide-react";
+import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import AddCustomItemModal from "./AddCustomItemModal";
@@ -168,6 +168,9 @@ const Products = () => {
   const [includeGallery, setIncludeGallery] = useState(false);
   const [includeBankDetails, setIncludeBankDetails] = useState(false);
   const [includeEventDate, setIncludeEventDate] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
   const [quoteHistory, setQuoteHistory] = useState(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -188,6 +191,31 @@ const Products = () => {
   );
 
   const [products, setProducts] = useState(items);
+
+  // Scroll listener for navbar shadow and scroll-to-top
+  useEffect(() => {
+    const handleScroll = () => {
+      setNavScrolled(window.scrollY > 20);
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // Filter products by search term
+  const displayProducts = useMemo(() => {
+    if (!productSearch.trim()) return products;
+    const term = productSearch.trim().toLowerCase();
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.description || "").toLowerCase().includes(term)
+    );
+  }, [products, productSearch]);
 
   const getInitials = (name) =>
     (name || "")
@@ -955,83 +983,165 @@ const Products = () => {
 
   return (
     <>
-      <section
-        className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-pink-50 py-6 sm:py-10 px-3 sm:px-4 md:px-10"
-        id="products"
+      <Helmet>
+        <title>South Lanka Fireworks - Invoice Generator</title>
+      </Helmet>
+
+      {/* Professional Sticky Navbar */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+          navScrolled
+            ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
+            : "bg-white/50 backdrop-blur-sm"
+        }`}
       >
-        <Helmet>
-          <title>South Lanka Fireworks - Products</title>
-        </Helmet>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Brand */}
+            <button onClick={scrollToTop} className="flex items-center gap-2 sm:gap-3 group">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <Sparkles size={16} className="text-white sm:w-5 sm:h-5" />
+              </div>
+              <div className="leading-tight">
+                <span className="font-bold text-sm sm:text-base tracking-tight text-gray-900">
+                  South Lanka
+                </span>
+                <span className="hidden sm:block text-[10px] font-semibold tracking-widest uppercase text-indigo-600">
+                  Fireworks
+                </span>
+              </div>
+            </button>
 
-        {cartCount > 0 && (
-          <Motion.div
-            className="fixed top-4 sm:top-20 right-3 sm:right-5 z-50 flex items-center gap-2 bg-white/95 shadow-lg backdrop-blur-md px-3 sm:px-4 py-2 rounded-full cursor-pointer hover:scale-105 transition border border-indigo-100"
-            onClick={() =>
-              document
-                .getElementById("custom-package")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <ShoppingCart size={18} className="text-indigo-600" />
-            <span className="font-semibold text-indigo-700 text-sm sm:text-base">
-              {cartCount}
-            </span>
-          </Motion.div>
-        )}
-
-        {/* Professional Toast Notification */}
-        <Toast 
-          show={showToast} 
-          data={toastData} 
-          onClose={() => setShowToast(false)} 
-        />
-
-        <AddCustomItemModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onAddItem={handleAddCustomItem}
-        />
-
-        {/* Hero Header */}
-        <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-pink-100 text-indigo-700 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-            <span>🎆</span>
-            <span>South Lanka Fireworks Invoice Generator</span>
+            {/* Nav Links + Actions */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <a href="#products" className="hidden md:inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-indigo-600 font-medium transition-colors">
+                <Package size={14} />
+                Products
+              </a>
+              <a href="#custom-package" className="hidden md:inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-indigo-600 font-medium transition-colors">
+                <FileText size={14} />
+                Quotation
+              </a>
+              {cartCount > 0 && (
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("custom-package")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="relative flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white pl-3 pr-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all shadow-md hover:shadow-lg animate-pulse-glow"
+                >
+                  <ShoppingCart size={15} className="text-white" />
+                  <span className="text-white font-bold">{cartCount}</span>
+                </button>
+              )}
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 mb-3 tracking-tight">
-            Create Your Perfect Quotation
+        </div>
+      </nav>
+
+      {/* Toast Notification */}
+      <Toast
+        show={showToast}
+        data={toastData}
+        onClose={() => setShowToast(false)}
+      />
+
+      <AddCustomItemModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAddItem={handleAddCustomItem}
+      />
+
+      <section
+        className="min-h-screen pt-16 sm:pt-20 pb-6 px-3 sm:px-4 md:px-8 lg:px-10"
+        id="products"
+        style={{
+          background: "linear-gradient(180deg, #eef2ff 0%, #ffffff 20%, #ffffff 60%, #f8fafc 80%, #f1f5f9 100%)"
+        }}
+      >
+        {/* Hero Header */}
+        <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12 pt-4 sm:pt-8">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-5 border border-indigo-100/80 shadow-sm">
+            <Zap size={14} className="text-indigo-500" />
+            <span>Professional Invoice Generator</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 sm:mb-4 tracking-tight leading-[1.1]">
+            Create Your Perfect
+            <br className="hidden sm:block" />
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"> Fireworks Quotation</span>
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-            Browse our fireworks, select quantities, and generate professional PDF invoices in seconds.
+          <p className="text-gray-500 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+            Browse our collection, select quantities, and generate professional PDF invoices in seconds.
           </p>
-          
+
+          {/* Search Bar */}
+          <div className="max-w-lg mx-auto mb-8">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl opacity-0 group-focus-within:opacity-20 blur transition duration-300" />
+              <div className="relative">
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Search fireworks by name..."
+                  className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-gray-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400"
+                />
+                {productSearch && (
+                  <button
+                    onClick={() => setProductSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+                  >
+                    <X size={12} className="text-gray-600" />
+                  </button>
+                )}
+              </div>
+            </div>
+            {productSearch && (
+              <p className="text-xs text-gray-400 mt-2">
+                {displayProducts.length} of {products.length} products
+              </p>
+            )}
+          </div>
+
           {/* Quick Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mt-6">
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span className="text-indigo-600 font-bold">{products.length}</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                <Package size={14} className="text-white" />
               </div>
-              <span className="text-gray-600">Products</span>
+              <div className="text-left">
+                <span className="block text-xs text-gray-400 font-medium leading-tight">Products</span>
+                <span className="block text-sm font-bold text-gray-800 tabular-nums">{products.length}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
-                <span className="text-pink-600 font-bold">{cartCount}</span>
+            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-pink-200 hover:shadow-md transition-all">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-sm">
+                <ShoppingCart size={14} className="text-white" />
               </div>
-              <span className="text-gray-600">In Cart</span>
+              <div className="text-left">
+                <span className="block text-xs text-gray-400 font-medium leading-tight">In Cart</span>
+                <span className="block text-sm font-bold text-gray-800 tabular-nums">{cartCount}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 font-bold">{quoteHistory.length}</span>
+            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                <FileText size={14} className="text-white" />
               </div>
-              <span className="text-gray-600">Saved</span>
+              <div className="text-left">
+                <span className="block text-xs text-gray-400 font-medium leading-tight">Saved</span>
+                <span className="block text-sm font-bold text-gray-800 tabular-nums">{quoteHistory.length}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <ProductGrid
-          products={products}
+          products={displayProducts}
           productVariants={productVariants}
           onAddToCart={addToCustomPackage}
           onAddCustomItem={() => setShowAddModal(true)}
@@ -1080,9 +1190,99 @@ const Products = () => {
         formatDateDDMMYYYY={formatDateDDMMYYYY}
         formatDateTimeReadable={formatDateTimeReadable}
       />
-      
-      {/* Footer spacing */}
-      <div className="h-8 sm:h-12" aria-hidden="true" />
+
+      {/* Professional Footer */}
+      <footer className="bg-gray-950 text-white mt-auto relative overflow-hidden">
+        {/* Decorative gradient line */}
+        <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600" />
+        
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <Sparkles size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">South Lanka Fireworks</h3>
+                  <p className="text-gray-500 text-xs tracking-wide">Spectacular displays since day one</p>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+                Sri Lanka's premier fireworks company. Breathtaking displays for weddings, festivals, and corporate events.
+              </p>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold text-xs text-gray-400 uppercase tracking-[0.2em] mb-5">Get in Touch</h4>
+              <ul className="space-y-3.5 text-sm">
+                <li className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 group-hover:border-indigo-600 flex items-center justify-center transition-colors">
+                    <Phone size={14} className="text-indigo-400" />
+                  </div>
+                  <span>077 713 5516 / 091 224 6572</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 group-hover:border-indigo-600 flex items-center justify-center transition-colors">
+                    <Mail size={14} className="text-indigo-400" />
+                  </div>
+                  <span>southlankafireworks@gmail.com</span>
+                </li>
+                <li className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 group-hover:border-indigo-600 flex items-center justify-center transition-colors shrink-0 mt-0.5">
+                    <MapPin size={14} className="text-indigo-400" />
+                  </div>
+                  <span>07 Dadalla Cross Road, Dadalla, Galle</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-gray-900 border border-gray-800 group-hover:border-indigo-600 flex items-center justify-center transition-colors">
+                    <Globe size={14} className="text-indigo-400" />
+                  </div>
+                  <span>www.slfireworks.com</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Bank Details */}
+            <div>
+              <h4 className="font-semibold text-xs text-gray-400 uppercase tracking-[0.2em] mb-5">Bank Details</h4>
+              <div className="bg-gray-900 rounded-xl p-4 space-y-2.5 border border-gray-800">
+                {BANK_DETAILS.map(({ label, value }) => (
+                  <div key={label} className="flex justify-between text-sm">
+                    <span className="text-gray-500">{label}</span>
+                    <span className="text-gray-300 font-medium">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 pt-6 border-t border-gray-800/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-gray-500 text-xs">
+              &copy; {new Date().getFullYear()} South Lanka Fireworks. All rights reserved.
+            </p>
+            <p className="text-gray-600 text-xs">Reg No: SG/5276</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <Motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl ring-4 ring-white/20 flex items-center justify-center transition-all"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp size={20} className="text-white" />
+          </Motion.button>
+        )}
+      </AnimatePresence>
     </>
   );
 };

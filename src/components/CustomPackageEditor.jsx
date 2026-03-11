@@ -153,19 +153,20 @@ const CustomPackageEditor = ({
 
   return (
     <div
-      className="max-w-6xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
+      className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
       id="custom-package"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-pink-500 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-4 sm:p-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ij48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnYuem0wLTZ2LTRoMnYueiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 relative">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
               <ShoppingCart size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">Your Quotation</h3>
-              <p className="text-white/80 text-xs sm:text-sm">
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Your Quotation</h3>
+              <p className="text-white/70 text-xs sm:text-sm">
                 {hasItems ? `${itemCount} item${itemCount !== 1 ? 's' : ''} in cart` : 'Start adding items below'}
               </p>
             </div>
@@ -173,7 +174,7 @@ const CustomPackageEditor = ({
           {hasItems && onClearCart && (
             <button
               onClick={onClearCart}
-              className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs sm:text-sm font-medium transition inline-flex items-center gap-1.5"
+              className="self-start sm:self-auto px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-xs sm:text-sm font-medium transition-all inline-flex items-center gap-1.5 border border-white/20"
             >
               <Trash2 size={14} />
               Clear All
@@ -418,7 +419,7 @@ const CustomPackageEditor = ({
             </div>
 
             {/* Summary & Generate Section */}
-            <div className="bg-gradient-to-r from-indigo-50 to-pink-50 rounded-xl p-4 sm:p-5 border border-indigo-100">
+            <div className="bg-gray-50 rounded-xl p-4 sm:p-5 border border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between sm:justify-start gap-4 text-sm">
@@ -445,9 +446,9 @@ const CustomPackageEditor = ({
 
                 <button
                   onClick={onGenerateReport}
-                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-xl hover:opacity-90 hover:shadow-lg transition-all inline-flex items-center justify-center gap-2 text-base sm:text-lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold py-3.5 sm:py-4 px-8 sm:px-10 rounded-xl shadow-lg hover:shadow-xl transition-all inline-flex items-center justify-center gap-2.5 text-base sm:text-lg group"
                 >
-                  <FileText size={20} className="text-white" />
+                  <FileText size={20} className="text-white group-hover:scale-110 transition-transform" />
                   <span>Generate PDF</span>
                 </button>
               </div>
