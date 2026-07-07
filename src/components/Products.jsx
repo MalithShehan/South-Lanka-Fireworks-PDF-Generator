@@ -164,6 +164,7 @@ const Products = () => {
   const [invoiceTo, setInvoiceTo] = useState("");
   const todayISO = new Date().toISOString().slice(0, 10);
   const [eventDate, setEventDate] = useState(todayISO);
+  const [invoiceDate, setInvoiceDate] = useState(todayISO);
   const [showAddModal, setShowAddModal] = useState(false);
   const [includeGallery, setIncludeGallery] = useState(false);
   const [includeBankDetails, setIncludeBankDetails] = useState(false);
@@ -289,6 +290,29 @@ const Products = () => {
     }
   };
 
+  const parseToISODate = (dateStr) => {
+    if (!dateStr) return todayISO;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+      const dd = parts[0].padStart(2, "0");
+      const mm = parts[1].padStart(2, "0");
+      const yyyy = parts[2];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    try {
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+      }
+    } catch {
+      // ignore
+    }
+    return todayISO;
+  };
+
   const addToCustomPackage = (item, sizeObj) => {
     const imageSource = getItemImageSource(item);
     const exists = customPackageItems.find(
@@ -349,6 +373,7 @@ const Products = () => {
       setCustomPackageItems([]);
       setPdfName("");
       setInvoiceTo("");
+      setInvoiceDate(todayISO);
       setDiscount("");
       setAdvance("");
       setToastData({
@@ -387,6 +412,8 @@ const Products = () => {
     setCustomPackageItems(itemsToLoad);
     setPdfName(inputs.pdfName ?? quote.pdfName ?? "");
     setInvoiceTo(inputs.invoiceTo ?? quote.invoiceTo ?? "");
+    const loadedInvoiceDate = inputs.invoiceDate ?? parseToISODate(quote.invoiceDate);
+    setInvoiceDate(loadedInvoiceDate);
     const loadedEventDate = inputs.eventDate ?? (quote.eventDate || todayISO);
     setEventDate(loadedEventDate);
     setDiscount(
@@ -742,7 +769,7 @@ const Products = () => {
     doc.setLineWidth(0.2);
     doc.line(x, y + 1, x + textWidth, y + 1);
     y += 7;
-    const todayFormatted = formatDateDDMMYYYY(generatedAt);
+    const todayFormatted = formatDateDDMMYYYY(invoiceDate);
     doc.text("Date :", 14, y);
     doc.text(todayFormatted, 27, y);
 
@@ -957,6 +984,7 @@ const Products = () => {
       inputs: {
         pdfName,
         invoiceTo,
+        invoiceDate,
         eventDate,
         discount,
         advance,
@@ -1159,6 +1187,8 @@ const Products = () => {
           onPdfNameChange={setPdfName}
           invoiceTo={invoiceTo}
           onInvoiceToChange={setInvoiceTo}
+          invoiceDate={invoiceDate}
+          onInvoiceDateChange={setInvoiceDate}
           eventDate={eventDate}
           onEventDateChange={setEventDate}
           includeEventDate={includeEventDate}

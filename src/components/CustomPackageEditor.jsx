@@ -13,6 +13,8 @@ const CustomPackageEditor = ({
   onPdfNameChange,
   invoiceTo,
   onInvoiceToChange,
+  invoiceDate,
+  onInvoiceDateChange,
   eventDate,
   onEventDateChange,
   includeEventDate,
@@ -253,7 +255,7 @@ const CustomPackageEditor = ({
                 <span className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs">1</span>
                 Client Details
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Invoice Name *</label>
                   <input
@@ -271,6 +273,16 @@ const CustomPackageEditor = ({
                     placeholder="e.g., Mr. & Mrs. Perera"
                     value={invoiceTo}
                     onChange={(event) => onInvoiceToChange(event.target.value)}
+                    className="w-full border border-gray-200 rounded-lg p-2.5 sm:p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Quotation Date</label>
+                  <input
+                    type="date"
+                    aria-label="Quotation date"
+                    value={invoiceDate}
+                    onChange={(event) => onInvoiceDateChange(event.target.value)}
                     className="w-full border border-gray-200 rounded-lg p-2.5 sm:p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                 </div>
