@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import items from "./Items";
 import jsPDF from "jspdf";
-import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package, ChevronRight, Plus } from "lucide-react";
+import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package, ChevronRight, Plus, AlertCircle, Info } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import AddCustomItemModal from "./AddCustomItemModal";
@@ -25,7 +25,7 @@ const BANK_DETAILS = [
   { label: "Acc Holder Name", value: "J.W.C.Thushara" },
 ];
 
-// Professional Toast Component
+// Small Liquid Glass Notification Component
 const Toast = ({ show, data, onClose }) => {
   const [progress, setProgress] = useState(100);
 
@@ -35,118 +35,133 @@ const Toast = ({ show, data, onClose }) => {
       return;
     }
     
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      setProgress(prev => {
-        const newVal = prev - (100 / (TOAST_DURATION / 50));
-        return newVal <= 0 ? 0 : newVal;
-      });
-    }, 50);
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 100 - (elapsed / TOAST_DURATION) * 100);
+      setProgress(remaining);
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 25);
 
     return () => clearInterval(interval);
-  }, [show]);
+  }, [show, data]);
 
   if (!data) return null;
 
-  const isSuccess = data.type !== 'error';
+  const isSuccess = data.type === 'success' || !data.type;
+  const isError = data.type === 'error';
+  const isInfo = data.type === 'info';
+
+  const liquidTheme = isError
+    ? {
+        icon: <AlertCircle className="w-3.5 h-3.5 text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]" />,
+        pillBg: "bg-rose-500/20 text-rose-300 border-rose-400/30",
+        glow: "rgba(244, 63, 94, 0.25)",
+        progress: "from-rose-500 via-rose-400 to-rose-300",
+      }
+    : isInfo
+    ? {
+        icon: <Info className="w-3.5 h-3.5 text-sky-300 drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]" />,
+        pillBg: "bg-sky-500/20 text-sky-300 border-sky-400/30",
+        glow: "rgba(56, 189, 248, 0.25)",
+        progress: "from-sky-500 via-indigo-400 to-sky-300",
+      }
+    : {
+        icon: <Check className="w-3.5 h-3.5 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />,
+        pillBg: "bg-amber-500/20 text-amber-300 border-amber-400/30",
+        glow: "rgba(245, 158, 11, 0.25)",
+        progress: "from-amber-500 via-yellow-400 to-amber-300",
+      };
 
   return (
     <AnimatePresence>
       {show && (
         <Motion.div
-          initial={{ opacity: 0, x: 100, scale: 0.95 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: 100, scale: 0.95 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed top-4 right-4 z-[9999] w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[340px] sm:max-w-[420px]"
+          initial={{ opacity: 0, y: -20, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -16, scale: 0.94 }}
+          transition={{ type: "spring", damping: 28, stiffness: 420 }}
+          className="fixed top-3 sm:top-4 inset-x-0 z-[10001] flex justify-center px-3 pointer-events-none"
         >
-          <div className={`relative overflow-hidden rounded-xl shadow-2xl border ${
-            isSuccess 
-              ? 'bg-white border-green-200' 
-              : 'bg-white border-red-200'
-          }`}>
-            {/* Progress bar */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
-              <Motion.div 
-                className={`h-full ${isSuccess ? 'bg-green-500' : 'bg-red-500'}`}
-                initial={{ width: '100%' }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.05 }}
-              />
-            </div>
-            
-            <div className="p-4 pt-5">
-              <div className="flex items-start gap-3">
-                {/* Icon */}
-                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                  isSuccess 
-                    ? 'bg-green-100' 
-                    : 'bg-red-100'
-                }`}>
-                  {isSuccess ? (
-                    <Check className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <X className="w-5 h-5 text-red-600" />
-                  )}
-                </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm ${
-                    isSuccess ? 'text-green-800' : 'text-red-800'
-                  }`}>
-                    {data.title || (isSuccess ? 'Added to Cart!' : 'Error')}
-                  </p>
-                  {data.message && (
-                    <p className="text-gray-600 text-sm mt-0.5 line-clamp-2">
-                      {data.message}
-                    </p>
-                  )}
-                  {data.itemName && (
-                    <div className="flex items-center gap-2 mt-2 p-2 bg-gray-50 rounded-lg">
-                      {data.itemImage && (
-                        <img 
-                          src={data.itemImage} 
-                          alt="" 
-                          className="w-8 h-8 rounded object-cover"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-800 leading-tight">
-                          {data.itemName}
-                        </p>
-                        {data.itemSize && (
-                          <p className="text-xs text-gray-500 mt-0.5">{data.itemSize}</p>
-                        )}
-                      </div>
-                      {data.itemPrice && (
-                        <span className="ml-auto text-xs font-semibold text-pink-600 whitespace-nowrap">
-                          Rs.{data.itemPrice.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Close button */}
-                <button
-                  onClick={onClose}
-                  className="flex-shrink-0 w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition"
-                  aria-label="Dismiss"
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="pointer-events-auto relative overflow-hidden rounded-2xl sm:rounded-full bg-slate-950/80 backdrop-blur-2xl border border-white/20 text-white w-full max-w-[370px] transition-all"
+            style={{
+              boxShadow: `0 12px 36px rgba(0, 0, 0, 0.45), 0 0 24px ${liquidTheme.glow}, inset 0 1px 1px rgba(255, 255, 255, 0.35)`,
+            }}
+          >
+            {/* Liquid Specular Reflection Edge */}
+            <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+
+            <div className="flex items-center gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-2.5">
+              {/* Liquid Status Icon or Thumbnail */}
+              {data.itemImage ? (
+                <img
+                  src={data.itemImage}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover border border-white/30 shrink-0 shadow-sm"
+                />
+              ) : (
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${liquidTheme.pillBg} backdrop-blur-md shadow-inner`}
                 >
-                  <X className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-              
-              {/* Cart count badge */}
-              {data.cartCount !== undefined && data.cartCount > 0 && (
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <span className="text-xs text-gray-500">Items in cart</span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    {data.cartCount}
-                  </span>
+                  {liquidTheme.icon}
                 </div>
               )}
+
+              {/* Message Content */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-extrabold text-white truncate leading-tight">
+                    {data.title || (isSuccess ? "Added to Quote" : "Notice")}
+                  </p>
+                  {data.itemPrice && (
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0 tabular-nums">
+                      Rs.{Number(data.itemPrice).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-300 truncate leading-tight mt-0.5">
+                  {data.itemName || data.message}
+                </p>
+              </div>
+
+              {/* Action shortcut or Dismiss */}
+              <div className="flex items-center gap-1 shrink-0">
+                {data.cartCount !== undefined && data.cartCount > 0 && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      document
+                        .getElementById("custom-package")
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-[10px] font-bold text-amber-300 border border-white/15 transition flex items-center gap-0.5"
+                    title="View Quote"
+                  >
+                    <span>Quote</span>
+                    <ChevronRight size={10} />
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="w-6 h-6 rounded-full hover:bg-white/15 active:scale-90 flex items-center justify-center text-slate-400 hover:text-white transition"
+                  aria-label="Dismiss"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Ultra-slim Liquid Progress Indicator */}
+            <div className="h-[2px] w-full bg-white/10 overflow-hidden">
+              <Motion.div
+                className={`h-full bg-gradient-to-r ${liquidTheme.progress}`}
+                style={{ width: `${progress}%` }}
+                transition={{ ease: "linear", duration: 0.05 }}
+              />
             </div>
           </div>
         </Motion.div>
@@ -1213,9 +1228,9 @@ const Products = () => {
 
       {/* Sticky Mobile Floating Cart Bar */}
       {cartCount > 0 && (
-        <div className="md:hidden fixed bottom-4 left-3 right-3 z-40 animate-slide-in">
-          <div className="bg-slate-950/95 backdrop-blur-xl text-white rounded-2xl p-3 shadow-2xl border border-white/15 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
+        <div className="md:hidden fixed bottom-3.5 left-3 right-3 z-40 animate-slide-in">
+          <div className="bg-slate-950/95 backdrop-blur-xl text-white rounded-2xl p-2.5 sm:p-3 shadow-2xl border border-white/15 flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-sm">
                 <ShoppingCart size={18} className="text-white" />
               </div>
@@ -1234,7 +1249,7 @@ const Products = () => {
                   .getElementById("custom-package")
                   ?.scrollIntoView({ behavior: "smooth" })
               }
-              className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold rounded-xl shadow-md shrink-0 flex items-center gap-1 active:scale-95 transition"
+              className="px-3.5 py-2.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-slate-950 text-xs font-black rounded-xl shadow-md shrink-0 flex items-center gap-1 active:scale-95 transition whitespace-nowrap"
             >
               <span>View Quote</span>
               <ChevronRight size={14} />
@@ -1510,7 +1525,9 @@ const Products = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl ring-4 ring-white/20 flex items-center justify-center transition-all"
+            className={`fixed ${
+              cartCount > 0 ? "bottom-[86px] md:bottom-6" : "bottom-6"
+            } right-4 sm:right-6 z-50 w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl ring-4 ring-white/20 flex items-center justify-center transition-all active:scale-95`}
             aria-label="Scroll to top"
           >
             <ArrowUp size={20} className="text-white" />
