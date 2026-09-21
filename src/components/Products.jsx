@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import items from "./Items";
 import jsPDF from "jspdf";
-import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package } from "lucide-react";
+import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package, ChevronRight, Plus } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import AddCustomItemModal from "./AddCustomItemModal";
@@ -15,6 +15,7 @@ const productVariants = {
 };
 
 const HISTORY_STORAGE_KEY = "slf-quotation-history";
+const CUSTOM_PRODUCTS_STORAGE_KEY = "slf-custom-products-v1";
 const HISTORY_LIMIT = 1000;
 const TOAST_DURATION = 3000;
 const BANK_DETAILS = [
@@ -184,6 +185,7 @@ const Products = () => {
     }
   });
   const [historySearch, setHistorySearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
   const imageCacheRef = useRef({});
 
   const cartCount = customPackageItems.reduce(
@@ -191,7 +193,47 @@ const Products = () => {
     0
   );
 
-  const [products, setProducts] = useState(items);
+  const [customProducts, setCustomProducts] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem(CUSTOM_PRODUCTS_STORAGE_KEY);
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sync custom items to localStorage database whenever updated
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        CUSTOM_PRODUCTS_STORAGE_KEY,
+        JSON.stringify(customProducts)
+      );
+    } catch (e) {
+      console.warn("Could not save custom products to database:", e);
+    }
+  }, [customProducts]);
+
+  // Combined product catalog: custom bespoke items first, then catalog items
+  const products = useMemo(() => {
+    return [...customProducts, ...items];
+  }, [customProducts]);
+
+  // Category item counts
+  const categoryCounts = useMemo(() => {
+    return {
+      all: products.length,
+      shells: products.filter((p) => (p.name || "").toLowerCase().includes("shell")).length,
+      cakes: products.filter((p) => {
+        const n = (p.name || "").toLowerCase();
+        return n.includes("cake") || n.includes("shot") || n.includes("display");
+      }).length,
+      custom: products.filter((p) => p.isCustom || String(p.id).startsWith("custom-")).length,
+    };
+  }, [products]);
 
   // Scroll listener for navbar shadow and scroll-to-top
   useEffect(() => {
@@ -207,16 +249,29 @@ const Products = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Filter products by search term
+  // Filter products by category and search term
   const displayProducts = useMemo(() => {
-    if (!productSearch.trim()) return products;
+    let filtered = products;
+
+    if (activeCategory === "shells") {
+      filtered = filtered.filter((p) => (p.name || "").toLowerCase().includes("shell"));
+    } else if (activeCategory === "cakes") {
+      filtered = filtered.filter((p) => {
+        const n = (p.name || "").toLowerCase();
+        return n.includes("cake") || n.includes("shot") || n.includes("display");
+      });
+    } else if (activeCategory === "custom") {
+      filtered = filtered.filter((p) => p.isCustom || String(p.id).startsWith("custom-"));
+    }
+
+    if (!productSearch.trim()) return filtered;
     const term = productSearch.trim().toLowerCase();
-    return products.filter(
+    return filtered.filter(
       (p) =>
-        p.name.toLowerCase().includes(term) ||
+        (p.name || "").toLowerCase().includes(term) ||
         (p.description || "").toLowerCase().includes(term)
     );
-  }, [products, productSearch]);
+  }, [products, productSearch, activeCategory]);
 
   const getInitials = (name) =>
     (name || "")
@@ -448,7 +503,7 @@ const Products = () => {
       ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleAddCustomItem = ({ name, size, price, qty }) => {
+  const handleAddCustomItem = ({ name, size, price, qty, image }) => {
     const trimmedName = (name || "").trim();
     if (!trimmedName) {
       setToastData({
@@ -467,27 +522,35 @@ const Products = () => {
     const numericQty = Math.max(1, Number.isNaN(parsedQty) ? 1 : parsedQty);
     const id = `custom-${Date.now()}`;
     const placeholderImage = makePlaceholderImage(trimmedName);
+    const finalImage = (image && typeof image === "string" && image.trim()) ? image.trim() : placeholderImage;
     const newItem = {
       id,
       name: trimmedName,
       size: cleanedSize,
       price: numericPrice,
       quantity: numericQty,
-      image: placeholderImage,
+      image: finalImage,
     };
     setCustomPackageItems((prev) => [...prev, newItem]);
 
-    try {
-      const productItem = {
-        id,
-        name: trimmedName,
-        image: placeholderImage,
-        sizes: [{ size: cleanedSize || "Custom", price: numericPrice }],
-      };
-      setProducts((prev) => [productItem, ...prev]);
-    } catch {
-      // ignore preview grid injection errors
-    }
+    const productItem = {
+      id,
+      name: trimmedName,
+      image: finalImage,
+      sizes: [{ size: cleanedSize || "Custom", price: numericPrice }],
+      isCustom: true,
+      createdAt: Date.now(),
+    };
+
+    setCustomProducts((prev) => {
+      const updated = [productItem, ...prev];
+      try {
+        localStorage.setItem(CUSTOM_PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (err) {
+        console.warn("Could not save to localStorage database:", err);
+      }
+      return updated;
+    });
 
     setToastData({
       type: 'success',
@@ -495,13 +558,34 @@ const Products = () => {
       itemName: trimmedName,
       itemSize: cleanedSize || 'Custom',
       itemPrice: numericPrice,
-      itemImage: placeholderImage,
+      itemImage: finalImage,
       cartCount: cartCount + numericQty,
     });
     setShowToast(true);
     setShowAddModal(false);
     setTimeout(() => setShowToast(false), TOAST_DURATION);
     return true;
+  };
+
+  const handleDeleteCustomProduct = (productId) => {
+    if (window.confirm("Do you want to delete this custom item from your database?")) {
+      setCustomProducts((prev) => {
+        const updated = prev.filter((p) => p.id !== productId);
+        try {
+          localStorage.setItem(CUSTOM_PRODUCTS_STORAGE_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+      setToastData({
+        type: 'info',
+        title: 'Custom Item Deleted',
+        message: 'Item removed from your catalog database',
+      });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), TOAST_DURATION);
+    }
   };
 
   useEffect(() => {
@@ -555,8 +639,30 @@ const Products = () => {
     );
   };
 
+  const removeCustomPackageItem = (item) => {
+    setCustomPackageItems(
+      customPackageItems.filter(
+        (i) => !(i.id === item.id && i.size === item.size)
+      )
+    );
+  };
+
+  const clearCart = () => {
+    if (customPackageItems.length === 0) return;
+    if (window.confirm("Are you sure you want to remove all items from your quotation?")) {
+      setCustomPackageItems([]);
+      setToastData({
+        type: 'info',
+        title: 'Quotation Cleared',
+        message: 'All items removed from your quotation',
+      });
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), TOAST_DURATION);
+    }
+  };
+
   const subTotal = customPackageItems.reduce(
-    (sum, i) => sum + (parseFloat(i.price) || 0) * i.quantity,
+    (acc, item) => acc + (parseFloat(item.price) || 0) * item.quantity,
     0
   );
   const discountValue = Number(discount) || 0;
@@ -567,7 +673,9 @@ const Products = () => {
   const loadCompressedImage = (url, maxWidth = 600) =>
     new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = "Anonymous";
+      if (!url.startsWith("data:")) {
+        img.crossOrigin = "Anonymous";
+      }
       img.src = url;
       img.onload = () => {
         const scale = Math.min(1, maxWidth / img.width);
@@ -586,7 +694,9 @@ const Products = () => {
   const loadSquareImage = (url, side = 320) =>
     new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = "Anonymous";
+      if (!url.startsWith("data:")) {
+        img.crossOrigin = "Anonymous";
+      }
       img.src = url;
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -608,7 +718,9 @@ const Products = () => {
 
   const loadProductImage = async (src) => {
     const safeSrc = src || makePlaceholderImage("Item");
-    const key = `${safeSrc}-square`;
+    const key = safeSrc.startsWith("data:")
+      ? `data-${safeSrc.length}-${safeSrc.slice(0, 40)}`
+      : `${safeSrc}-square`;
     if (imageCacheRef.current[key]) {
       return imageCacheRef.current[key];
     }
@@ -1015,41 +1127,58 @@ const Products = () => {
         <title>South Lanka Fireworks - Invoice Generator</title>
       </Helmet>
 
-      {/* Professional Sticky Navbar */}
+      {/* Luxury Sticky Navbar */}
       <nav
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           navScrolled
             ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
-            : "bg-white/50 backdrop-blur-sm"
+            : "bg-white/70 backdrop-blur-sm"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Brand */}
-            <button onClick={scrollToTop} className="flex items-center gap-2 sm:gap-3 group">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <Sparkles size={16} className="text-white sm:w-5 sm:h-5" />
+            {/* Brand Logo */}
+            <button onClick={scrollToTop} className="flex items-center gap-2.5 sm:gap-3 group">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-amber-500 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+                <Sparkles size={18} className="text-white sm:w-5 sm:h-5" />
               </div>
-              <div className="leading-tight">
-                <span className="font-bold text-sm sm:text-base tracking-tight text-gray-900">
+              <div className="leading-tight text-left">
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 block">
                   South Lanka
                 </span>
-                <span className="hidden sm:block text-[10px] font-semibold tracking-widest uppercase text-indigo-600">
-                  Fireworks
+                <span className="text-[10px] font-bold tracking-widest uppercase text-indigo-600 block">
+                  Fireworks Studio
                 </span>
               </div>
             </button>
 
             {/* Nav Links + Actions */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              <a href="#products" className="hidden md:inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-indigo-600 font-medium transition-colors">
-                <Package size={14} />
-                Products
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition active:scale-95 border border-indigo-100"
+              >
+                <Plus size={14} />
+                <span className="hidden sm:inline">Add Custom Item</span>
+                <span className="sm:hidden">Custom</span>
+              </button>
+
+              <a
+                href="#products"
+                className="hidden md:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
+              >
+                <Package size={15} />
+                Catalog
               </a>
-              <a href="#custom-package" className="hidden md:inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-indigo-600 font-medium transition-colors">
-                <FileText size={14} />
+
+              <a
+                href="#custom-package"
+                className="hidden md:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
+              >
+                <FileText size={15} />
                 Quotation
               </a>
+
               {cartCount > 0 && (
                 <button
                   onClick={() =>
@@ -1057,10 +1186,11 @@ const Products = () => {
                       .getElementById("custom-package")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
-                  className="relative flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white pl-3 pr-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all shadow-md hover:shadow-lg animate-pulse-glow"
+                  className="relative flex items-center gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white pl-3 pr-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95 animate-pulse-glow"
                 >
                   <ShoppingCart size={15} className="text-white" />
-                  <span className="text-white font-bold">{cartCount}</span>
+                  <span className="font-extrabold">{cartCount}</span>
+                  <span className="hidden sm:inline text-indigo-100 font-normal">| Rs. {subTotal.toLocaleString()}</span>
                 </button>
               )}
             </div>
@@ -1081,90 +1211,163 @@ const Products = () => {
         onAddItem={handleAddCustomItem}
       />
 
+      {/* Sticky Mobile Floating Cart Bar */}
+      {cartCount > 0 && (
+        <div className="md:hidden fixed bottom-4 left-3 right-3 z-40 animate-slide-in">
+          <div className="bg-slate-950/95 backdrop-blur-xl text-white rounded-2xl p-3 shadow-2xl border border-white/15 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-sm">
+                <ShoppingCart size={18} className="text-white" />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-[11px] text-slate-400 font-medium truncate leading-tight">
+                  {cartCount} item{cartCount !== 1 ? 's' : ''} in quotation
+                </p>
+                <p className="text-sm font-black text-amber-400 truncate">
+                  Rs. {subTotal.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() =>
+                document
+                  .getElementById("custom-package")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold rounded-xl shadow-md shrink-0 flex items-center gap-1 active:scale-95 transition"
+            >
+              <span>View Quote</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <section
         className="min-h-screen pt-16 sm:pt-20 pb-6 px-3 sm:px-4 md:px-8 lg:px-10"
         id="products"
         style={{
-          background: "linear-gradient(180deg, #eef2ff 0%, #ffffff 20%, #ffffff 60%, #f8fafc 80%, #f1f5f9 100%)"
+          background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 18%, #ffffff 60%, #f8fafc 85%, #f1f5f9 100%)"
         }}
       >
         {/* Hero Header */}
         <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12 pt-4 sm:pt-8">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-5 border border-indigo-100/80 shadow-sm">
-            <Zap size={14} className="text-indigo-500" />
-            <span>Professional Invoice Generator</span>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 text-indigo-800 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4 border border-indigo-100 shadow-sm">
+            <Zap size={14} className="text-amber-500" />
+            <span>Sri Lanka's Premier Pyrotechnics • Invoice Studio</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-3 sm:mb-4 tracking-tight leading-[1.1]">
-            Create Your Perfect
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-3 tracking-tight leading-[1.15]">
+            Create Your Bespoke
             <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"> Fireworks Quotation</span>
           </h1>
-          <p className="text-gray-500 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-            Browse our collection, select quantities, and generate professional PDF invoices in seconds.
+
+          <p className="text-slate-500 text-xs sm:text-sm md:text-base max-w-2xl mx-auto mb-6 leading-relaxed px-2">
+            Select items, adjust quantities, add bespoke fireworks with photos from your device, and generate professional PDF invoices in seconds.
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-lg mx-auto mb-8">
+          <div className="max-w-md sm:max-w-lg mx-auto mb-5 px-2">
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl opacity-0 group-focus-within:opacity-20 blur transition duration-300" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl opacity-0 group-focus-within:opacity-25 blur transition duration-300" />
               <div className="relative">
                 <Search
                   size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                 />
                 <input
                   type="text"
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Search fireworks by name..."
-                  className="w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-xl border border-gray-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-gray-400"
+                  placeholder="Search fireworks catalog..."
+                  className="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
                 />
                 {productSearch && (
                   <button
                     onClick={() => setProductSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition"
                   >
-                    <X size={12} className="text-gray-600" />
+                    <X size={12} className="text-slate-600" />
                   </button>
                 )}
               </div>
             </div>
-            {productSearch && (
-              <p className="text-xs text-gray-400 mt-2">
-                {displayProducts.length} of {products.length} products
-              </p>
-            )}
           </div>
 
-          {/* Quick Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm">
+          {/* Category Tabs */}
+          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-6 px-2 scrollbar-none">
+            {[
+              { id: "all", label: "All Items", icon: "✨" },
+              { id: "shells", label: "Aerial Shells", icon: "🎆" },
+              { id: "cakes", label: "Cakes & Displays", icon: "🎇" },
+              { id: "custom", label: "Custom Bespoke", icon: "💎" },
+            ].map((tab) => {
+              const count = categoryCounts[tab.id];
+              const isActive = activeCategory === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveCategory(tab.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap active:scale-95 ${
+                    isActive
+                      ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 scale-[1.02]"
+                      : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80 shadow-xs"
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Metrics Cards */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 px-2">
+            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-indigo-200 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-xs">
                 <Package size={14} className="text-white" />
               </div>
               <div className="text-left">
-                <span className="block text-xs text-gray-400 font-medium leading-tight">Products</span>
-                <span className="block text-sm font-bold text-gray-800 tabular-nums">{products.length}</span>
+                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Catalog</span>
+                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{products.length}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-pink-200 hover:shadow-md transition-all">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-sm">
+
+            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-pink-200 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-xs">
                 <ShoppingCart size={14} className="text-white" />
               </div>
               <div className="text-left">
-                <span className="block text-xs text-gray-400 font-medium leading-tight">In Cart</span>
-                <span className="block text-sm font-bold text-gray-800 tabular-nums">{cartCount}</span>
+                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">In Cart</span>
+                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{cartCount}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2.5 bg-white rounded-xl px-4 py-2.5 shadow-sm border border-gray-100 hover:border-emerald-200 hover:shadow-md transition-all">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+
+            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-emerald-200 transition-all">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-xs">
                 <FileText size={14} className="text-white" />
               </div>
               <div className="text-left">
-                <span className="block text-xs text-gray-400 font-medium leading-tight">Saved</span>
-                <span className="block text-sm font-bold text-gray-800 tabular-nums">{quoteHistory.length}</span>
+                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Saved Quotes</span>
+                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{quoteHistory.length}</span>
               </div>
             </div>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
+            >
+              <Plus size={14} />
+              <span>Add Custom Entry</span>
+            </button>
           </div>
         </div>
 
@@ -1173,6 +1376,7 @@ const Products = () => {
           productVariants={productVariants}
           onAddToCart={addToCustomPackage}
           onAddCustomItem={() => setShowAddModal(true)}
+          onDeleteCustomProduct={handleDeleteCustomProduct}
         />
 
         <CustomPackageEditor
