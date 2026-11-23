@@ -20,7 +20,6 @@ import {
   History,
   Search,
   RefreshCcw,
-  Wand2,
   Printer,
   PenTool,
   Landmark,
@@ -35,8 +34,6 @@ import {
   formatDateLong,
 } from "../utils/companyInfo";
 import {
-  HEADER_BADGE_OPTIONS,
-  LETTERHEAD_TEMPLATES,
   generateLetterheadPdf,
   parseBodyBlocks,
   parseInlineSegments,
@@ -44,7 +41,6 @@ import {
 
 const LETTER_HISTORY_KEY = "slf-letterhead-history-v1";
 const SIGNATURE_STORAGE_KEY = "slf-letterhead-signature-v1";
-const DRAFT_STORAGE_KEY = "slf-letterhead-draft-v1";
 const A4_WIDTH_PX = 794; // 210mm @ 96dpi
 const A4_HEIGHT_PX = 1123; // 297mm @ 96dpi
 
@@ -105,10 +101,11 @@ const LetterheadPaperPreview = ({
   }, []);
 
   const blocks = useMemo(() => parseBodyBlocks(body), [body]);
-  const formattedDate =
-    dateFormat === "short"
+  const formattedDate = letterDate
+    ? dateFormat === "short"
       ? formatDateDDMMYYYY(letterDate)
-      : formatDateLong(letterDate);
+      : formatDateLong(letterDate)
+    : "";
 
   const recipientLines = useMemo(
     () =>
@@ -128,11 +125,17 @@ const LetterheadPaperPreview = ({
     [closing]
   );
 
+  const hasManualSignatureContent =
+    includeSignature &&
+    (closingLines.length > 0 ||
+      Boolean((signatoryName || "").trim()) ||
+      Boolean((signatoryTitle || "").trim()) ||
+      Boolean(signatureImage));
+
   // Measure content height to show multi-page indicator in preview
   useEffect(() => {
     if (!contentMeasureRef.current) return;
     const contentHeight = contentMeasureRef.current.scrollHeight;
-    // Usable page 1 body area is roughly 735px (1123 - 268 header - 120 footer+margins)
     if (contentHeight <= 740) {
       setEstimatedPages(1);
     } else {
@@ -145,6 +148,8 @@ const LetterheadPaperPreview = ({
     salutation,
     body,
     closing,
+    signatoryName,
+    signatoryTitle,
     includeBankDetails,
     includeSignature,
     signatureImage,
@@ -157,13 +162,7 @@ const LetterheadPaperPreview = ({
       ? "'Times New Roman', Georgia, Times, serif"
       : "Helvetica, Arial, 'Plus Jakarta Sans', sans-serif";
 
-  // Convert pt to px (1pt = 1.333px at 96dpi)
   const bodyFontSizePx = fontSize * 1.333;
-  const isEmpty =
-    !recipientLines.length &&
-    !(subject || "").trim() &&
-    !(salutation || "").trim() &&
-    blocks.length === 0;
 
   return (
     <div className="flex flex-col">
@@ -172,7 +171,7 @@ const LetterheadPaperPreview = ({
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live Auto-Preview
+            Live Preview
           </span>
           <span className="text-[11px] font-semibold text-slate-500">
             A4 Portrait (210 × 297 mm)
@@ -259,7 +258,7 @@ const LetterheadPaperPreview = ({
                 </div>
               </div>
 
-              {/* Optional Right Header Label */}
+              {/* Optional Right Header Label (only shown if manually entered) */}
               {headerBadge && headerBadge.trim() && (
                 <div
                   className="absolute right-[44px] top-1/2 -translate-y-1/2 font-bold uppercase tracking-wider text-right"
@@ -269,7 +268,7 @@ const LetterheadPaperPreview = ({
                     color: "#FFD24D",
                   }}
                 >
-                  {headerBadge}
+                  {headerBadge.trim()}
                 </div>
               )}
             </div>
@@ -283,21 +282,21 @@ const LetterheadPaperPreview = ({
             {/* Header Metadata & Right Company Contact Block */}
             <div
               className="relative z-10 flex items-start justify-between shrink-0"
-              style={{ padding: "22px 60px 10px 60px" }}
+              style={{ padding: "20px 60px 10px 60px" }}
             >
-              {/* Left: Date & Reference Number */}
+              {/* Left: Date & Reference Number (only shown when manually entered) */}
               <div className="pt-2 space-y-2" style={{ fontSize: "14px" }}>
-                <div className="flex items-baseline gap-2">
-                  <span
-                    className="font-bold"
-                    style={{ color: COMPANY_INFO.colors.navyHex }}
-                  >
-                    Date :
-                  </span>
-                  <span className="text-slate-900">
-                    {formattedDate || formatDateDDMMYYYY(new Date())}
-                  </span>
-                </div>
+                {formattedDate && (
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className="font-bold"
+                      style={{ color: COMPANY_INFO.colors.navyHex }}
+                    >
+                      Date :
+                    </span>
+                    <span className="text-slate-900">{formattedDate}</span>
+                  </div>
+                )}
                 {refNumber && refNumber.trim() && (
                   <div className="flex items-baseline gap-2">
                     <span
@@ -317,9 +316,9 @@ const LetterheadPaperPreview = ({
                 style={{
                   width: "242px",
                   fontFamily: "Helvetica, Arial, sans-serif",
-                  fontSize: "12.2px",
+                  fontSize: "12px",
                   color: "#121C2D",
-                  lineHeight: "1.45",
+                  lineHeight: "1.42",
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -373,73 +372,48 @@ const LetterheadPaperPreview = ({
               ref={contentMeasureRef}
               className="relative z-10 flex-1 overflow-hidden"
               style={{
-                padding: "24px 60px 16px 60px",
+                padding: "22px 60px 16px 60px",
                 fontSize: `${bodyFontSizePx}px`,
-                lineHeight: "1.58",
+                lineHeight: "1.55",
                 color: "#121C2D",
               }}
             >
-              {isEmpty ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-10 opacity-55">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 border"
-                    style={{
-                      backgroundColor: "#F0F4FA",
-                      borderColor: "#CBD5E1",
-                      color: COMPANY_INFO.colors.navyHex,
-                    }}
-                  >
-                    <PenTool size={28} />
+              <div className="space-y-3">
+                {/* Recipient Block */}
+                {recipientLines.length > 0 && (
+                  <div className="leading-snug mb-3.5">
+                    {recipientLines.map((line, i) => (
+                      <div key={i} className={i === 0 ? "font-bold text-slate-950" : "text-slate-900"}>
+                        {line}
+                      </div>
+                    ))}
                   </div>
-                  <p
-                    className="font-bold text-slate-700"
-                    style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "17px" }}
-                  >
-                    Start typing on the left to generate your letterhead
-                  </p>
-                  <p
-                    className="text-slate-500 mt-1.5 max-w-md"
-                    style={{ fontFamily: "Helvetica, Arial, sans-serif", fontSize: "13px" }}
-                  >
-                    Enter any letter text or select a ready-made South Lanka Fireworks template. Your official letterhead updates automatically in real time.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3.5">
-                  {/* Recipient Block */}
-                  {recipientLines.length > 0 && (
-                    <div className="leading-snug mb-4">
-                      {recipientLines.map((line, i) => (
-                        <div key={i} className={i === 0 ? "font-bold text-slate-950" : "text-slate-900"}>
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                )}
 
-                  {/* Salutation */}
-                  {salutation && salutation.trim() && (
-                    <div className="text-slate-900">{salutation.trim()}</div>
-                  )}
+                {/* Salutation */}
+                {salutation && salutation.trim() && (
+                  <div className="text-slate-900">{salutation.trim()}</div>
+                )}
 
-                  {/* Subject Line */}
-                  {subject && subject.trim() && (
-                    <div className="pt-1 pb-1">
-                      <span
-                        className="font-bold inline"
-                        style={{
-                          color: COMPANY_INFO.colors.navyHex,
-                          fontSize: `${bodyFontSizePx + 0.8}px`,
-                          borderBottom: `1.5px solid ${COMPANY_INFO.colors.navyHex}`,
-                          paddingBottom: "2px",
-                        }}
-                      >
-                        {subject.trim()}
-                      </span>
-                    </div>
-                  )}
+                {/* Subject Line */}
+                {subject && subject.trim() && (
+                  <div className="pt-0.5 pb-1">
+                    <span
+                      className="font-bold inline"
+                      style={{
+                        color: COMPANY_INFO.colors.navyHex,
+                        fontSize: `${bodyFontSizePx + 0.8}px`,
+                        borderBottom: `1.5px solid ${COMPANY_INFO.colors.navyHex}`,
+                        paddingBottom: "2px",
+                      }}
+                    >
+                      {subject.trim()}
+                    </span>
+                  </div>
+                )}
 
-                  {/* Body Paragraphs & Lists */}
+                {/* Body Paragraphs & Lists */}
+                {blocks.length > 0 && (
                   <div className="space-y-2.5">
                     {blocks.map((block, idx) => {
                       if (block.type === "spacer") {
@@ -495,7 +469,7 @@ const LetterheadPaperPreview = ({
                           style={{
                             textAlign,
                             fontSize: `${bodyFontSizePx}px`,
-                            lineHeight: "1.58",
+                            lineHeight: "1.55",
                             color: "#121C2D",
                           }}
                         >
@@ -504,92 +478,88 @@ const LetterheadPaperPreview = ({
                       );
                     })}
                   </div>
+                )}
 
-                  {/* Optional Official Bank Details Box */}
-                  {includeBankDetails && (
+                {/* Optional Official Bank Details Box */}
+                {includeBankDetails && (
+                  <div
+                    className="mt-4 rounded-lg overflow-hidden border flex"
+                    style={{
+                      backgroundColor: "rgba(244, 247, 252, 0.92)",
+                      borderColor: "#D6DEEA",
+                      fontFamily: "Helvetica, Arial, sans-serif",
+                    }}
+                  >
                     <div
-                      className="mt-5 rounded-lg overflow-hidden border flex"
-                      style={{
-                        backgroundColor: "rgba(244, 247, 252, 0.92)",
-                        borderColor: "#D6DEEA",
-                        fontFamily: "Helvetica, Arial, sans-serif",
-                      }}
-                    >
+                      className="w-[7px] shrink-0"
+                      style={{ backgroundColor: COMPANY_INFO.colors.navyHex }}
+                    />
+                    <div className="p-3 flex-1">
                       <div
-                        className="w-[7px] shrink-0"
-                        style={{ backgroundColor: COMPANY_INFO.colors.navyHex }}
-                      />
-                      <div className="p-3.5 flex-1">
-                        <div
-                          className="font-bold uppercase tracking-wider mb-2"
-                          style={{ fontSize: "12px", color: COMPANY_INFO.colors.navyHex }}
-                        >
-                          Official Bank Details
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5" style={{ fontSize: "12px" }}>
-                          {BANK_DETAILS.map(({ label, value }) => (
-                            <div key={label} className="flex items-center gap-1.5">
-                              <span className="font-semibold text-slate-500">{label}:</span>
-                              <span className="font-bold text-slate-900">{value}</span>
-                            </div>
-                          ))}
-                        </div>
+                        className="font-bold uppercase tracking-wider mb-1.5"
+                        style={{ fontSize: "12px", color: COMPANY_INFO.colors.navyHex }}
+                      >
+                        Official Bank Details
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-1" style={{ fontSize: "12px" }}>
+                        {BANK_DETAILS.map(({ label, value }) => (
+                          <div key={label} className="flex items-center gap-1.5">
+                            <span className="font-semibold text-slate-500">{label}:</span>
+                            <span className="font-bold text-slate-900">{value}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Signature Block */}
-                  {includeSignature && (
-                    <div className="pt-5">
-                      {closingLines.map((line, idx) => (
-                        <div key={idx} className="text-slate-900">
-                          {line}
-                        </div>
-                      ))}
+                {/* Signature Block (only renders fields manually filled by the user) */}
+                {hasManualSignatureContent && (
+                  <div className="pt-4">
+                    {closingLines.map((line, idx) => (
+                      <div key={idx} className="text-slate-900">
+                        {line}
+                      </div>
+                    ))}
 
-                      {signatureImage ? (
-                        <div className="my-2">
-                          <img
-                            src={signatureImage}
-                            alt="Signature"
-                            className="h-[58px] max-w-[180px] object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-[46px]" />
-                      )}
+                    {signatureImage ? (
+                      <div className="my-2">
+                        <img
+                          src={signatureImage}
+                          alt="Signature"
+                          className="h-[54px] max-w-[170px] object-contain"
+                        />
+                      </div>
+                    ) : (
+                      ((signatoryName || "").trim() || (signatoryTitle || "").trim()) && (
+                        <div className="h-[40px]" />
+                      )
+                    )}
 
+                    {((signatoryName || "").trim() ||
+                      (signatoryTitle || "").trim() ||
+                      signatureImage) && (
                       <div
-                        className="w-[218px] mb-1.5"
+                        className="w-[210px] mb-1.5"
                         style={{ height: "1.5px", backgroundColor: COMPANY_INFO.colors.navyHex }}
                       />
-                      {signatoryName && (
-                        <div className="font-bold text-slate-950 leading-snug">
-                          {signatoryName}
-                        </div>
-                      )}
-                      {signatoryTitle && (
-                        <div
-                          className="text-slate-600 leading-snug"
-                          style={{ fontSize: `${bodyFontSizePx - 1.3}px` }}
-                        >
-                          {signatoryTitle}
-                        </div>
-                      )}
-                      <div
-                        className="font-bold leading-snug"
-                        style={{
-                          fontFamily: "Helvetica, Arial, sans-serif",
-                          fontSize: `${bodyFontSizePx - 1.3}px`,
-                          color: COMPANY_INFO.colors.navyHex,
-                        }}
-                      >
-                        {COMPANY_INFO.name}
+                    )}
+                    {signatoryName && signatoryName.trim() && (
+                      <div className="font-bold text-slate-950 leading-snug">
+                        {signatoryName.trim()}
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                    {signatoryTitle && signatoryTitle.trim() && (
+                      <div
+                        className="text-slate-600 leading-snug"
+                        style={{ fontSize: `${bodyFontSizePx - 1.3}px` }}
+                      >
+                        {signatoryTitle.trim()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Subtle fade hint if content continues to page 2+ */}
               {estimatedPages > 1 && (
@@ -627,7 +597,7 @@ const LetterheadPaperPreview = ({
                   {COMPANY_INFO.footerText}
                 </div>
                 <div style={{ fontSize: "10.5px", color: "#C8D8F0", marginTop: "3px" }}>
-                  {COMPANY_INFO.fullAddress} &nbsp;&bull;&nbsp; {COMPANY_INFO.phones} &nbsp;&bull;&nbsp; {COMPANY_INFO.website}
+                  {COMPANY_INFO.fullAddress} &nbsp;|&nbsp; {COMPANY_INFO.phones} &nbsp;|&nbsp; {COMPANY_INFO.website}
                 </div>
               </div>
             </div>
@@ -639,56 +609,28 @@ const LetterheadPaperPreview = ({
 };
 
 const LetterheadGenerator = ({ onNotify }) => {
-  const todayISO = new Date().toISOString().slice(0, 10);
-
-  // Restore draft from localStorage if available
-  const initialDraft = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const [pdfName, setPdfName] = useState(initialDraft?.pdfName || "");
-  const [letterDate, setLetterDate] = useState(initialDraft?.letterDate || todayISO);
-  const [dateFormat, setDateFormat] = useState(initialDraft?.dateFormat || "long");
-  const [refNumber, setRefNumber] = useState(initialDraft?.refNumber || "");
-  const [headerBadge, setHeaderBadge] = useState(
-    initialDraft?.headerBadge ?? "OFFICIAL LETTER"
-  );
-  const [recipient, setRecipient] = useState(initialDraft?.recipient || "");
-  const [subject, setSubject] = useState(initialDraft?.subject || "");
-  const [salutation, setSalutation] = useState(
-    initialDraft?.salutation ?? "Dear Sir / Madam,"
-  );
-  const [body, setBody] = useState(initialDraft?.body || "");
-  const [closing, setClosing] = useState(initialDraft?.closing ?? "Yours faithfully,");
-  const [signatoryName, setSignatoryName] = useState(
-    initialDraft?.signatoryName ?? COMPANY_INFO.proprietorClean
-  );
-  const [signatoryTitle, setSignatoryTitle] = useState(
-    initialDraft?.signatoryTitle ?? COMPANY_INFO.proprietorTitle
-  );
-  const [includeWatermark, setIncludeWatermark] = useState(
-    initialDraft?.includeWatermark ?? true
-  );
-  const [includeSignature, setIncludeSignature] = useState(
-    initialDraft?.includeSignature ?? true
-  );
-  const [includeBankDetails, setIncludeBankDetails] = useState(
-    initialDraft?.includeBankDetails ?? false
-  );
-  const [fontFamily, setFontFamily] = useState(initialDraft?.fontFamily || "helvetica");
-  const [fontSize, setFontSize] = useState(initialDraft?.fontSize || 11);
-  const [textAlign, setTextAlign] = useState(initialDraft?.textAlign || "justify");
-  const [activeTemplateId, setActiveTemplateId] = useState("custom");
+  // All fields start completely blank for 100% manual entry
+  const [pdfName, setPdfName] = useState("");
+  const [letterDate, setLetterDate] = useState("");
+  const [dateFormat, setDateFormat] = useState("long");
+  const [refNumber, setRefNumber] = useState("");
+  const [headerBadge, setHeaderBadge] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [subject, setSubject] = useState("");
+  const [salutation, setSalutation] = useState("");
+  const [body, setBody] = useState("");
+  const [closing, setClosing] = useState("");
+  const [signatoryName, setSignatoryName] = useState("");
+  const [signatoryTitle, setSignatoryTitle] = useState("");
+  const [includeWatermark, setIncludeWatermark] = useState(true);
+  const [includeSignature, setIncludeSignature] = useState(false);
+  const [includeBankDetails, setIncludeBankDetails] = useState(false);
+  const [fontFamily, setFontFamily] = useState("helvetica");
+  const [fontSize, setFontSize] = useState(11);
+  const [textAlign, setTextAlign] = useState("justify");
   const [mobileTab, setMobileTab] = useState("editor"); // "editor" | "preview"
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Persisted optional signature / stamp image
   const [signatureImage, setSignatureImage] = useState(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -714,56 +656,6 @@ const LetterheadGenerator = ({ onNotify }) => {
 
   const bodyTextareaRef = useRef(null);
   const sigInputRef = useRef(null);
-
-  // Auto-save working draft
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        DRAFT_STORAGE_KEY,
-        JSON.stringify({
-          pdfName,
-          letterDate,
-          dateFormat,
-          refNumber,
-          headerBadge,
-          recipient,
-          subject,
-          salutation,
-          body,
-          closing,
-          signatoryName,
-          signatoryTitle,
-          includeWatermark,
-          includeSignature,
-          includeBankDetails,
-          fontFamily,
-          fontSize,
-          textAlign,
-        })
-      );
-    } catch {
-      // ignore storage quota errors
-    }
-  }, [
-    pdfName,
-    letterDate,
-    dateFormat,
-    refNumber,
-    headerBadge,
-    recipient,
-    subject,
-    salutation,
-    body,
-    closing,
-    signatoryName,
-    signatoryTitle,
-    includeWatermark,
-    includeSignature,
-    includeBankDetails,
-    fontFamily,
-    fontSize,
-    textAlign,
-  ]);
 
   // Persist saved letterheads history
   useEffect(() => {
@@ -798,62 +690,35 @@ const LetterheadGenerator = ({ onNotify }) => {
     [onNotify]
   );
 
-  const handleAutoRef = () => {
-    const year = new Date().getFullYear();
-    const seq = String(letterHistory.length + 1).padStart(3, "0");
-    setRefNumber(`SLF/${year}/${seq}`);
-  };
-
-  const applyTemplate = (template) => {
-    setActiveTemplateId(template.id);
-    setHeaderBadge(template.data.headerBadge);
-    setRecipient(template.data.recipient);
-    setSubject(template.data.subject);
-    setSalutation(template.data.salutation);
-    setBody(template.data.body);
-    setClosing(template.data.closing);
-    setIncludeBankDetails(template.data.includeBankDetails);
-    setIncludeSignature(template.data.includeSignature);
-    if (!pdfName.trim() && template.id !== "blank") {
-      setPdfName(`SLF_${template.name.replace(/[^a-zA-Z0-9]+/g, "_")}`);
-    }
-    notify({
-      type: "info",
-      title: "Template Loaded",
-      message: `"${template.name}" applied to letterhead`,
-    });
-  };
-
   const handleReset = () => {
     if (
       (body.trim() || subject.trim() || recipient.trim()) &&
       typeof window !== "undefined" &&
-      !window.confirm("Clear all text in the current letterhead?")
+      !window.confirm("Clear all fields in the current letterhead?")
     ) {
       return;
     }
     setPdfName("");
-    setLetterDate(todayISO);
+    setLetterDate("");
     setRefNumber("");
-    setHeaderBadge("OFFICIAL LETTER");
+    setHeaderBadge("");
     setRecipient("");
     setSubject("");
-    setSalutation("Dear Sir / Madam,");
+    setSalutation("");
     setBody("");
-    setClosing("Yours faithfully,");
-    setSignatoryName(COMPANY_INFO.proprietorClean);
-    setSignatoryTitle(COMPANY_INFO.proprietorTitle);
+    setClosing("");
+    setSignatoryName("");
+    setSignatoryTitle("");
     setIncludeBankDetails(false);
-    setIncludeSignature(true);
-    setActiveTemplateId("blank");
+    setIncludeSignature(false);
     notify({
       type: "info",
-      title: "Letterhead Reset",
-      message: "Ready for a fresh official letter",
+      title: "Letterhead Cleared",
+      message: "All fields reset to blank",
     });
   };
 
-  // Smart formatting helpers for the main letter body textarea
+  // Formatting helpers for the main letter body textarea
   const insertBodyFormat = (kind) => {
     const textarea = bodyTextareaRef.current;
     if (!textarea) return;
@@ -865,9 +730,8 @@ const LetterheadGenerator = ({ onNotify }) => {
     let cursorOffset = 0;
 
     if (kind === "bold") {
-      const inner = selected || "Important Text";
-      insertion = `**${inner}**`;
-      cursorOffset = start + insertion.length;
+      insertion = `**${selected}**`;
+      cursorOffset = selected ? start + insertion.length : start + 2;
     } else if (kind === "bullet") {
       const prefix = start > 0 && body[start - 1] !== "\n" ? "\n" : "";
       if (selected) {
@@ -897,9 +761,8 @@ const LetterheadGenerator = ({ onNotify }) => {
       cursorOffset = start + insertion.length;
     } else if (kind === "heading") {
       const prefix = start > 0 && body[start - 1] !== "\n" ? "\n\n" : "";
-      const title = selected || "Section Title:";
-      insertion = `${prefix}**${title}**\n`;
-      cursorOffset = start + insertion.length;
+      insertion = `${prefix}**${selected}**`;
+      cursorOffset = selected ? start + insertion.length : start + prefix.length + 2;
     }
 
     const updated = body.slice(0, start) + insertion + body.slice(end);
@@ -948,7 +811,7 @@ const LetterheadGenerator = ({ onNotify }) => {
         notify({
           type: "success",
           title: "Signature Attached",
-          message: "Saved for future official letterheads",
+          message: "Added to your letterhead",
         });
       };
       img.src = reader.result;
@@ -1002,7 +865,6 @@ const LetterheadGenerator = ({ onNotify }) => {
           message: `${result.fileName} (${result.totalPages} page${result.totalPages > 1 ? "s" : ""})`,
         });
       } else {
-        // Save to letterhead history
         const entry = {
           id: `letter-${Date.now()}`,
           savedAt: new Date().toISOString(),
@@ -1048,19 +910,19 @@ const LetterheadGenerator = ({ onNotify }) => {
 
   const handleLoadFromHistory = (entry) => {
     setPdfName(entry.pdfName || "");
-    setLetterDate(entry.letterDate || todayISO);
+    setLetterDate(entry.letterDate || "");
     setDateFormat(entry.dateFormat || "long");
     setRefNumber(entry.refNumber || "");
-    setHeaderBadge(entry.headerBadge ?? "OFFICIAL LETTER");
+    setHeaderBadge(entry.headerBadge || "");
     setRecipient(entry.recipient || "");
     setSubject(entry.subject || "");
-    setSalutation(entry.salutation ?? "");
+    setSalutation(entry.salutation || "");
     setBody(entry.body || "");
-    setClosing(entry.closing ?? "Yours faithfully,");
-    setSignatoryName(entry.signatoryName ?? COMPANY_INFO.proprietorClean);
-    setSignatoryTitle(entry.signatoryTitle ?? COMPANY_INFO.proprietorTitle);
+    setClosing(entry.closing || "");
+    setSignatoryName(entry.signatoryName || "");
+    setSignatoryTitle(entry.signatoryTitle || "");
     setIncludeWatermark(entry.includeWatermark ?? true);
-    setIncludeSignature(entry.includeSignature ?? true);
+    setIncludeSignature(entry.includeSignature ?? false);
     setIncludeBankDetails(entry.includeBankDetails ?? false);
     setFontFamily(entry.fontFamily || "helvetica");
     setFontSize(entry.fontSize || 11);
@@ -1118,7 +980,7 @@ const LetterheadGenerator = ({ onNotify }) => {
       <div className="max-w-5xl mx-auto text-center mb-6 sm:mb-8 pt-4 sm:pt-6">
         <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 text-indigo-800 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-3.5 border border-indigo-100 shadow-sm">
           <FileSignature size={14} className="text-amber-500" />
-          <span>Official Company Branding &bull; Auto-Formatted A4 PDF</span>
+          <span>Official Company Branding &bull; A4 Letterhead PDF</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-2.5 tracking-tight leading-[1.15]">
@@ -1130,61 +992,9 @@ const LetterheadGenerator = ({ onNotify }) => {
         </h1>
 
         <p className="text-slate-500 text-xs sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed px-2">
-          Type or paste any text and automatically generate an official{" "}
-          <strong className="text-slate-700">South Lanka Fireworks</strong> letterhead PDF matching your quotation branding — complete with logo, registration details, watermark, and signature.
+          Enter your own text manually and instantly generate an official{" "}
+          <strong className="text-slate-700">South Lanka Fireworks</strong> letterhead PDF matching your quotation branding.
         </p>
-      </div>
-
-      {/* Quick One-Click Templates Strip */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/80 p-3 sm:p-4 shadow-xs">
-          <div className="flex items-center justify-between gap-2 mb-2.5 px-1">
-            <div className="flex items-center gap-2">
-              <Wand2 size={15} className="text-indigo-600" />
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                Quick Official Templates
-              </span>
-            </div>
-            <span className="text-[11px] text-slate-400 hidden sm:inline">
-              Click any template to auto-fill, or type your own text below
-            </span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            {LETTERHEAD_TEMPLATES.map((tpl) => {
-              const isSelected = activeTemplateId === tpl.id;
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => applyTemplate(tpl)}
-                  className={`text-left p-2.5 sm:p-3 rounded-xl border transition-all active:scale-[0.98] ${
-                    isSelected
-                      ? "bg-indigo-50/90 border-indigo-400 shadow-xs"
-                      : "bg-slate-50/70 hover:bg-indigo-50/40 border-slate-200/80 hover:border-indigo-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-xs font-bold text-slate-900 truncate">
-                      {tpl.name}
-                    </span>
-                    <span
-                      className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md shrink-0 ${
-                        tpl.badge === "Most Used"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-indigo-100 text-indigo-700"
-                      }`}
-                    >
-                      {tpl.badge}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 leading-snug line-clamp-2 m-0">
-                    {tpl.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       {/* Main Studio Card */}
@@ -1204,7 +1014,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                     Letterhead Studio
                   </h2>
                   <span className="bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 text-[10px] sm:text-xs font-extrabold px-2.5 py-0.5 rounded-full">
-                    Auto-Sync
+                    Live Preview
                   </span>
                 </div>
                 <p className="text-slate-300/85 text-xs sm:text-sm mt-0.5 font-medium">
@@ -1274,7 +1084,7 @@ const LetterheadGenerator = ({ onNotify }) => {
 
         {/* Split Editor + Live A4 Preview */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:divide-x divide-slate-200">
-          {/* LEFT: Letter Composer */}
+          {/* LEFT: Manual Letter Composer */}
           <div
             className={`lg:col-span-6 p-4 sm:p-6 space-y-5 ${
               mobileTab === "preview" ? "hidden lg:block" : "block"
@@ -1287,7 +1097,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                   1
                 </span>
                 <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
-                  Document Details
+                  Document Details (Optional)
                 </h3>
               </div>
 
@@ -1295,13 +1105,13 @@ const LetterheadGenerator = ({ onNotify }) => {
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
                     <FileText size={12} className="text-indigo-500" />
-                    PDF File Name (optional)
+                    PDF File Name
                   </label>
                   <input
                     type="text"
                     value={pdfName}
                     onChange={(e) => setPdfName(e.target.value)}
-                    placeholder="Auto-named from subject if blank"
+                    placeholder="Enter PDF file name"
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
                   />
                 </div>
@@ -1334,25 +1144,15 @@ const LetterheadGenerator = ({ onNotify }) => {
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
                     <Hash size={12} className="text-indigo-500" />
-                    Reference No. (optional)
+                    Reference No.
                   </label>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      value={refNumber}
-                      onChange={(e) => setRefNumber(e.target.value)}
-                      placeholder="e.g., SLF/2026/001"
-                      className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAutoRef}
-                      className="px-2.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold shrink-0"
-                      title="Auto-generate reference number"
-                    >
-                      Auto
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    value={refNumber}
+                    onChange={(e) => setRefNumber(e.target.value)}
+                    placeholder="Enter reference number"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
+                  />
                 </div>
 
                 <div>
@@ -1360,17 +1160,13 @@ const LetterheadGenerator = ({ onNotify }) => {
                     <Sparkles size={12} className="text-amber-500" />
                     Header Label
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={headerBadge}
                     onChange={(e) => setHeaderBadge(e.target.value)}
+                    placeholder="e.g., OFFICIAL LETTER"
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium text-slate-800"
-                  >
-                    {HEADER_BADGE_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
             </div>
@@ -1395,13 +1191,13 @@ const LetterheadGenerator = ({ onNotify }) => {
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
                     <User size={12} className="text-purple-500" />
-                    To / Recipient (optional)
+                    To / Recipient
                   </label>
                   <textarea
                     rows={3}
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    placeholder={"The Officer-in-Charge,\nPolice Station,\nGalle."}
+                    placeholder="Enter recipient name and address"
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium resize-y"
                   />
                 </div>
@@ -1409,25 +1205,25 @@ const LetterheadGenerator = ({ onNotify }) => {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Salutation (optional)
+                      Salutation
                     </label>
                     <input
                       type="text"
                       value={salutation}
                       onChange={(e) => setSalutation(e.target.value)}
-                      placeholder="Dear Sir / Madam,"
+                      placeholder="Enter salutation"
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
                     />
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Subject / Heading (auto-underlined)
+                      Subject / Heading
                     </label>
                     <input
                       type="text"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      placeholder="e.g., REQUEST FOR FIREWORKS DISPLAY PERMISSION"
+                      placeholder="Enter subject heading"
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-bold text-slate-800"
                     />
                   </div>
@@ -1438,7 +1234,7 @@ const LetterheadGenerator = ({ onNotify }) => {
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                   <label className="text-[11px] font-semibold text-slate-600">
-                    Letter Body Text (updates letterhead automatically)
+                    Letter Body Text
                   </label>
                   <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5">
                     <button
@@ -1453,7 +1249,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                       type="button"
                       onClick={() => insertBodyFormat("heading")}
                       className="p-1.5 rounded-md hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 transition"
-                      title="Add section heading"
+                      title="Section heading"
                     >
                       <Heading size={13} />
                     </button>
@@ -1481,7 +1277,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                   rows={9}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="Type or paste your letter text here...&#10;&#10;Tips:&#10;- Use **bold text** for emphasis&#10;- Start lines with - for clean bullet points&#10;- Leave a blank line between paragraphs&#10;- Long letters automatically continue onto Page 2 with official headers & footers!"
+                  placeholder="Type or paste your letter content here..."
                   className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent leading-relaxed resize-y font-normal text-slate-800"
                 />
               </div>
@@ -1597,7 +1393,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                   },
                   {
                     label: "Signature",
-                    sub: "Closing block",
+                    sub: "Add closing",
                     checked: includeSignature,
                     onChange: setIncludeSignature,
                     icon: <PenTool size={13} className="text-purple-500" />,
@@ -1646,7 +1442,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                 ))}
               </div>
 
-              {/* Signatory Details (shown when Signature enabled) */}
+              {/* Signatory Details (all blank for manual entry when Signature enabled) */}
               {includeSignature && (
                 <div className="bg-white rounded-xl p-3 border border-slate-200/80 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -1658,7 +1454,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                         type="text"
                         value={closing}
                         onChange={(e) => setClosing(e.target.value)}
-                        placeholder="Yours faithfully,"
+                        placeholder="Enter closing"
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
@@ -1670,7 +1466,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                         type="text"
                         value={signatoryName}
                         onChange={(e) => setSignatoryName(e.target.value)}
-                        placeholder={COMPANY_INFO.proprietorClean}
+                        placeholder="Enter name"
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
@@ -1682,7 +1478,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                         type="text"
                         value={signatoryTitle}
                         onChange={(e) => setSignatoryTitle(e.target.value)}
-                        placeholder={COMPANY_INFO.proprietorTitle}
+                        placeholder="Enter title"
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
@@ -1825,7 +1621,7 @@ const LetterheadGenerator = ({ onNotify }) => {
                   <p className="text-slate-400 text-xs sm:text-sm font-medium mt-0.5">
                     {letterHistory.length > 0
                       ? "Reload, edit, or instantly re-download any generated company letter"
-                      : "Your downloaded letterheads will automatically be archived here"}
+                      : "Your downloaded letterheads will appear here"}
                   </p>
                 </div>
               </div>
@@ -1937,10 +1733,14 @@ const LetterheadGenerator = ({ onNotify }) => {
                     </div>
 
                     <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 text-[11px]">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-bold border border-indigo-100">
-                        <Calendar size={10} />
-                        {formatDateDDMMYYYY(item.letterDate)}
-                      </span>
+                      {item.letterDate ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-2 py-0.5 font-bold border border-indigo-100">
+                          <Calendar size={10} />
+                          {formatDateDDMMYYYY(item.letterDate)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">No date</span>
+                      )}
                       {item.refNumber && (
                         <span className="text-slate-500 font-semibold truncate">
                           {item.refNumber}

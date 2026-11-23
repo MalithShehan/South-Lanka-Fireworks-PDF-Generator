@@ -349,20 +349,20 @@ const drawStyledLine = (doc, tokens, x, y, maxWidth, fontFamily, fontSize, justi
 export const generateLetterheadPdf = async (config, mode = "download") => {
   const {
     pdfName = "",
-    letterDate = new Date().toISOString().slice(0, 10),
+    letterDate = "",
     dateFormat = "long", // "long" | "short"
     refNumber = "",
-    headerBadge = "OFFICIAL LETTER",
+    headerBadge = "",
     recipient = "",
     subject = "",
     salutation = "",
     body = "",
-    closing = "Yours faithfully,",
-    signatoryName = COMPANY_INFO.proprietorClean,
-    signatoryTitle = COMPANY_INFO.proprietorTitle,
+    closing = "",
+    signatoryName = "",
+    signatoryTitle = "",
     signatureImage = null,
     includeWatermark = true,
-    includeSignature = true,
+    includeSignature = false,
     includeBankDetails = false,
     fontFamily = "helvetica", // "helvetica" | "times"
     fontSize = 11,
@@ -485,22 +485,24 @@ export const generateLetterheadPdf = async (config, mode = "download") => {
       contactY += lineGap;
     });
 
-    // Left-aligned Date & Reference Number aligned cleanly with contact block
+    // Left-aligned Date & Reference Number (only rendered when manually entered)
     let leftMetaY = 34;
-    const formattedDate =
-      dateFormat === "short" ? formatDateDDMMYYYY(letterDate) : formatDateLong(letterDate);
-
-    doc.setFont(fontFamily, "bold");
-    doc.setFontSize(10.5);
-    doc.setTextColor(...COMPANY_INFO.colors.navy);
-    doc.text("Date :", marginX, leftMetaY);
-    doc.setFont(fontFamily, "normal");
-    doc.setTextColor(...COMPANY_INFO.colors.textDark);
-    doc.text(formattedDate || formatDateDDMMYYYY(new Date()), marginX + 14, leftMetaY);
-    leftMetaY += 5.8;
+    if (letterDate && letterDate.trim()) {
+      const formattedDate =
+        dateFormat === "short" ? formatDateDDMMYYYY(letterDate) : formatDateLong(letterDate);
+      doc.setFont(fontFamily, "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(...COMPANY_INFO.colors.navy);
+      doc.text("Date :", marginX, leftMetaY);
+      doc.setFont(fontFamily, "normal");
+      doc.setTextColor(...COMPANY_INFO.colors.textDark);
+      doc.text(formattedDate, marginX + 14, leftMetaY);
+      leftMetaY += 5.8;
+    }
 
     if (refNumber && refNumber.trim()) {
       doc.setFont(fontFamily, "bold");
+      doc.setFontSize(10.5);
       doc.setTextColor(...COMPANY_INFO.colors.navy);
       doc.text("Ref No :", marginX, leftMetaY);
       doc.setFont(fontFamily, "normal");
@@ -777,40 +779,50 @@ export const generateLetterheadPdf = async (config, mode = "download") => {
     y += bankBoxHeight + 3.5;
   }
 
-  // 6. Signature & Closing Block
-  if (includeSignature) {
+  // 6. Signature & Closing Block (only renders what the user manually entered)
+  const hasManualSignatureContent =
+    includeSignature &&
+    (sanitizePdfText(closing).trim() ||
+      sanitizePdfText(signatoryName).trim() ||
+      sanitizePdfText(signatoryTitle).trim() ||
+      loadedSigImg?.dataUrl);
+
+  if (hasManualSignatureContent) {
     const closingLines = sanitizePdfText(closing)
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
     const sigBlockHeight =
-      (closingLines.length || 1) * lineHeight + (loadedSigImg ? 18 : 13) + 14;
+      closingLines.length * lineHeight + (loadedSigImg ? 18 : 13) + 14;
 
     ensureSpace(sigBlockHeight + 2);
     y += 3.5;
 
-    doc.setFont(fontFamily, "normal");
-    doc.setFontSize(fontSize);
-    doc.setTextColor(...COMPANY_INFO.colors.textDark);
-    closingLines.forEach((cLine) => {
-      doc.text(cLine, marginX, y);
-      y += lineHeight * 0.92;
-    });
+    if (closingLines.length > 0) {
+      doc.setFont(fontFamily, "normal");
+      doc.setFontSize(fontSize);
+      doc.setTextColor(...COMPANY_INFO.colors.textDark);
+      closingLines.forEach((cLine) => {
+        doc.text(cLine, marginX, y);
+        y += lineHeight * 0.92;
+      });
+    }
 
     if (loadedSigImg?.dataUrl) {
       const sigH = 14;
       const sigW = Math.min(44, sigH * (loadedSigImg.ratio || 2.4));
       doc.addImage(loadedSigImg.dataUrl, "PNG", marginX, y + 0.5, sigW, sigH);
       y += sigH + 3;
-    } else {
+    } else if (signatoryName?.trim() || signatoryTitle?.trim()) {
       y += 11;
     }
 
-    // Signature dotted/solid rule
-    doc.setDrawColor(...COMPANY_INFO.colors.navy);
-    doc.setLineWidth(0.35);
-    doc.line(marginX, y, marginX + 56, y);
-    y += 4.4;
+    if (signatoryName?.trim() || signatoryTitle?.trim() || loadedSigImg?.dataUrl) {
+      doc.setDrawColor(...COMPANY_INFO.colors.navy);
+      doc.setLineWidth(0.35);
+      doc.line(marginX, y, marginX + 56, y);
+      y += 4.4;
+    }
 
     if (signatoryName && signatoryName.trim()) {
       doc.setFont(fontFamily, "bold");
@@ -827,11 +839,6 @@ export const generateLetterheadPdf = async (config, mode = "download") => {
       doc.text(sanitizePdfText(signatoryTitle.trim()), marginX, y);
       y += 4.2;
     }
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(fontSize - 1);
-    doc.setTextColor(...COMPANY_INFO.colors.navy);
-    doc.text(COMPANY_INFO.name, marginX, y);
   }
 
   // Stamp consistent official footers across all generated pages
