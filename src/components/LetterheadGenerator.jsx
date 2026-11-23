@@ -1103,24 +1103,30 @@ const LetterheadGenerator = ({ onNotify }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-0.5 flex items-center gap-1">
                     <FileText size={12} className="text-indigo-500" />
                     PDF File Name
                   </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                    Example: <span className="font-medium text-indigo-600/80">Police_Permission_Galle_2026</span>
+                  </p>
                   <input
                     type="text"
                     value={pdfName}
                     onChange={(e) => setPdfName(e.target.value)}
-                    placeholder="Enter PDF file name"
+                    placeholder="Type file name..."
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-0.5 flex items-center gap-1">
                     <Calendar size={12} className="text-indigo-500" />
                     Letter Date
                   </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                    Example: <span className="font-medium text-indigo-600/80">23 November 2026</span> or <span className="font-medium text-indigo-600/80">23/11/2026</span>
+                  </p>
                   <div className="flex items-center gap-1.5">
                     <input
                       type="date"
@@ -1142,29 +1148,35 @@ const LetterheadGenerator = ({ onNotify }) => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-0.5 flex items-center gap-1">
                     <Hash size={12} className="text-indigo-500" />
                     Reference No.
                   </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                    Example: <span className="font-medium text-indigo-600/80">SLF/2026/001</span>
+                  </p>
                   <input
                     type="text"
                     value={refNumber}
                     onChange={(e) => setRefNumber(e.target.value)}
-                    placeholder="Enter reference number"
+                    placeholder="Type reference number..."
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-0.5 flex items-center gap-1">
                     <Sparkles size={12} className="text-amber-500" />
                     Header Label
                   </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                    Example: <span className="font-medium text-indigo-600/80">OFFICIAL LETTER</span>, <span className="font-medium text-indigo-600/80">PROPOSAL</span>, <span className="font-medium text-indigo-600/80">CONFIRMATION</span>
+                  </p>
                   <input
                     type="text"
                     value={headerBadge}
                     onChange={(e) => setHeaderBadge(e.target.value)}
-                    placeholder="e.g., OFFICIAL LETTER"
+                    placeholder="Type header label..."
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium text-slate-800"
                   />
                 </div>
@@ -1189,51 +1201,60 @@ const LetterheadGenerator = ({ onNotify }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-0.5 flex items-center gap-1">
                     <User size={12} className="text-purple-500" />
                     To / Recipient
                   </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                    Example: <span className="font-medium text-purple-600/80">The Officer-in-Charge, Police Station, Galle.</span>
+                  </p>
                   <textarea
                     rows={3}
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    placeholder="Enter recipient name and address"
+                    placeholder="Type recipient name & address..."
                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium resize-y"
                   />
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">
                       Salutation
                     </label>
+                    <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                      Example: <span className="font-medium text-purple-600/80">Dear Sir / Madam,</span>
+                    </p>
                     <input
                       type="text"
                       value={salutation}
                       onChange={(e) => setSalutation(e.target.value)}
-                      placeholder="Enter salutation"
+                      placeholder="Type salutation..."
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">
                       Subject / Heading
                     </label>
+                    <p className="text-[10px] text-slate-400 mb-1.5 m-0 leading-tight">
+                      Example: <span className="font-medium text-purple-600/80">REQUEST FOR FIREWORKS DISPLAY PERMISSION</span>
+                    </p>
                     <input
                       type="text"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Enter subject heading"
+                      placeholder="Type subject heading..."
                       className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-bold text-slate-800"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Main Body Textarea + Mini Formatting Toolbar */}
+              {/* Main Body Textarea + Example Guide + Mini Formatting Toolbar */}
               <div>
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                  <label className="text-[11px] font-semibold text-slate-600">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                  <label className="text-[11px] font-semibold text-slate-700">
                     Letter Body Text
                   </label>
                   <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5">
@@ -1270,6 +1291,14 @@ const LetterheadGenerator = ({ onNotify }) => {
                       <ListOrdered size={13} />
                     </button>
                   </div>
+                </div>
+
+                <div className="mb-2 rounded-xl bg-indigo-50/60 border border-indigo-100 px-3 py-2 text-[10px] sm:text-[11px] text-slate-600 leading-relaxed">
+                  <span className="font-bold text-indigo-700">Example: </span>
+                  We, <span className="font-semibold text-slate-800">**South Lanka Fireworks**</span> (Reg. No: SG/5276), kindly request permission to conduct a fireworks display on 15 Dec 2026 at Galle Fort.
+                  <span className="block text-[10px] text-slate-500 mt-0.5">
+                    Formatting tips: use <code className="px-1 py-0.5 rounded bg-white border border-indigo-100 text-indigo-700 font-semibold">**text**</code> for bold, <code className="px-1 py-0.5 rounded bg-white border border-indigo-100 text-indigo-700 font-semibold">- item</code> for bullets, or <code className="px-1 py-0.5 rounded bg-white border border-indigo-100 text-indigo-700 font-semibold">1. item</code> for numbered points.
+                  </span>
                 </div>
 
                 <textarea
@@ -1447,38 +1476,47 @@ const LetterheadGenerator = ({ onNotify }) => {
                 <div className="bg-white rounded-xl p-3 border border-slate-200/80 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-[10px] font-semibold text-slate-700 mb-0.5">
                         Closing Phrase
                       </label>
+                      <p className="text-[10px] text-slate-400 mb-1 m-0 leading-tight">
+                        Ex: <span className="text-indigo-600/80">Yours faithfully,</span>
+                      </p>
                       <input
                         type="text"
                         value={closing}
                         onChange={(e) => setClosing(e.target.value)}
-                        placeholder="Enter closing"
+                        placeholder="Type closing..."
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-[10px] font-semibold text-slate-700 mb-0.5">
                         Signatory Name
                       </label>
+                      <p className="text-[10px] text-slate-400 mb-1 m-0 leading-tight">
+                        Ex: <span className="text-indigo-600/80">J.W. Chaminda Thushara</span>
+                      </p>
                       <input
                         type="text"
                         value={signatoryName}
                         onChange={(e) => setSignatoryName(e.target.value)}
-                        placeholder="Enter name"
+                        placeholder="Type name..."
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      <label className="block text-[10px] font-semibold text-slate-700 mb-0.5">
                         Designation / Title
                       </label>
+                      <p className="text-[10px] text-slate-400 mb-1 m-0 leading-tight">
+                        Ex: <span className="text-indigo-600/80">Proprietor / Director</span>
+                      </p>
                       <input
                         type="text"
                         value={signatoryTitle}
                         onChange={(e) => setSignatoryTitle(e.target.value)}
-                        placeholder="Enter title"
+                        placeholder="Type title..."
                         className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       />
                     </div>
