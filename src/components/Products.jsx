@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import items from "./Items";
 import jsPDF from "jspdf";
-import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package, ChevronRight, Plus, AlertCircle, Info } from "lucide-react";
+import { ShoppingCart, Check, X, Search, ArrowUp, Sparkles, Phone, Mail, MapPin, Globe, Zap, FileText, Package, ChevronRight, Plus, AlertCircle, Info, FileSignature } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import AddCustomItemModal from "./AddCustomItemModal";
 import ProductGrid from "./ProductGrid";
 import CustomPackageEditor from "./CustomPackageEditor";
 import QuoteHistory from "./QuoteHistory";
+import LetterheadGenerator from "./LetterheadGenerator";
 
 const productVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -171,9 +172,32 @@ const Toast = ({ show, data, onClose }) => {
 };
 
 const Products = () => {
+  const [activeStudio, setActiveStudio] = useState(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#letterhead") {
+      return "letterhead";
+    }
+    return "quotation";
+  });
   const [customPackageItems, setCustomPackageItems] = useState([]);
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState(null);
+  const toastTimerRef = useRef(null);
+
+  const showNotification = useCallback((data) => {
+    setToastData(data);
+    setShowToast(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setShowToast(false), TOAST_DURATION);
+  }, []);
+
+  const switchStudio = useCallback((studio) => {
+    setActiveStudio(studio);
+    if (typeof window !== "undefined") {
+      const nextHash = studio === "letterhead" ? "#letterhead" : "#products";
+      window.history.replaceState(null, "", nextHash);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
   const [pdfName, setPdfName] = useState("");
   const [discount, setDiscount] = useState("");
   const [advance, setAdvance] = useState("");
@@ -1139,7 +1163,11 @@ const Products = () => {
   return (
     <>
       <Helmet>
-        <title>South Lanka Fireworks - Invoice Generator</title>
+        <title>
+          {activeStudio === "letterhead"
+            ? "South Lanka Fireworks - Company Letterhead Generator"
+            : "South Lanka Fireworks - Invoice Generator"}
+        </title>
       </Helmet>
 
       {/* Luxury Sticky Navbar */}
@@ -1151,9 +1179,9 @@ const Products = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
             {/* Brand Logo */}
-            <button onClick={scrollToTop} className="flex items-center gap-2.5 sm:gap-3 group">
+            <button onClick={scrollToTop} className="flex items-center gap-2 sm:gap-3 group shrink-0">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-amber-500 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
                 <Sparkles size={18} className="text-white sm:w-5 sm:h-5" />
               </div>
@@ -1167,46 +1195,78 @@ const Products = () => {
               </div>
             </button>
 
+            {/* Primary Studio Mode Switcher (Quotation | Letterhead) */}
+            <div className="inline-flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-inner">
+              <button
+                type="button"
+                onClick={() => switchStudio("quotation")}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  activeStudio === "quotation"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <FileText size={14} />
+                <span>Quotation</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => switchStudio("letterhead")}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  activeStudio === "letterhead"
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
+                    : "text-slate-600 hover:text-indigo-700"
+                }`}
+              >
+                <FileSignature size={14} />
+                <span>Letterhead</span>
+              </button>
+            </div>
+
             {/* Nav Links + Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition active:scale-95 border border-indigo-100"
-              >
-                <Plus size={14} />
-                <span className="hidden sm:inline">Add Custom Item</span>
-                <span className="sm:hidden">Custom</span>
-              </button>
+              {activeStudio === "quotation" && (
+                <>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition active:scale-95 border border-indigo-100"
+                  >
+                    <Plus size={14} />
+                    <span className="hidden md:inline">Add Custom Item</span>
+                    <span className="md:hidden">Custom</span>
+                  </button>
 
-              <a
-                href="#products"
-                className="hidden md:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
-              >
-                <Package size={15} />
-                Catalog
-              </a>
+                  <a
+                    href="#products"
+                    className="hidden lg:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
+                  >
+                    <Package size={15} />
+                    Catalog
+                  </a>
 
-              <a
-                href="#custom-package"
-                className="hidden md:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
-              >
-                <FileText size={15} />
-                Quotation
-              </a>
+                  <a
+                    href="#custom-package"
+                    className="hidden lg:inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
+                  >
+                    <FileText size={15} />
+                    Quote
+                  </a>
 
-              {cartCount > 0 && (
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("custom-package")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="relative flex items-center gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white pl-3 pr-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95 animate-pulse-glow"
-                >
-                  <ShoppingCart size={15} className="text-white" />
-                  <span className="font-extrabold">{cartCount}</span>
-                  <span className="hidden sm:inline text-indigo-100 font-normal">| Rs. {subTotal.toLocaleString()}</span>
-                </button>
+                  {cartCount > 0 && (
+                    <button
+                      onClick={() =>
+                        document
+                          .getElementById("custom-package")
+                          ?.scrollIntoView({ behavior: "smooth" })
+                      }
+                      className="relative flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white pl-2.5 pr-3 sm:pl-3 sm:pr-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95 animate-pulse-glow"
+                    >
+                      <ShoppingCart size={15} className="text-white" />
+                      <span className="font-extrabold">{cartCount}</span>
+                      <span className="hidden xl:inline text-indigo-100 font-normal">| Rs. {subTotal.toLocaleString()}</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1227,7 +1287,7 @@ const Products = () => {
       />
 
       {/* Sticky Mobile Floating Cart Bar */}
-      {cartCount > 0 && (
+      {activeStudio === "quotation" && cartCount > 0 && (
         <div className="md:hidden fixed bottom-3.5 left-3 right-3 z-40 animate-slide-in">
           <div className="bg-slate-950/95 backdrop-blur-xl text-white rounded-2xl p-2.5 sm:p-3 shadow-2xl border border-white/15 flex items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1258,13 +1318,17 @@ const Products = () => {
         </div>
       )}
 
-      <section
-        className="min-h-screen pt-16 sm:pt-20 pb-6 px-3 sm:px-4 md:px-8 lg:px-10"
-        id="products"
-        style={{
-          background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 18%, #ffffff 60%, #f8fafc 85%, #f1f5f9 100%)"
-        }}
-      >
+      {activeStudio === "letterhead" ? (
+        <LetterheadGenerator onNotify={showNotification} />
+      ) : (
+        <>
+          <section
+            className="min-h-screen pt-16 sm:pt-20 pb-6 px-3 sm:px-4 md:px-8 lg:px-10"
+            id="products"
+            style={{
+              background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 18%, #ffffff 60%, #f8fafc 85%, #f1f5f9 100%)"
+            }}
+          >
         {/* Hero Header */}
         <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12 pt-4 sm:pt-8">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 text-indigo-800 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4 border border-indigo-100 shadow-sm">
@@ -1383,6 +1447,14 @@ const Products = () => {
               <Plus size={14} />
               <span>Add Custom Entry</span>
             </button>
+
+            <button
+              onClick={() => switchStudio("letterhead")}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
+            >
+              <FileSignature size={14} />
+              <span>Create Letterhead</span>
+            </button>
           </div>
         </div>
 
@@ -1428,17 +1500,19 @@ const Products = () => {
         />
       </section>
 
-      <QuoteHistory
-        quoteHistory={quoteHistory}
-        filteredHistory={filteredHistory}
-        historySearch={historySearch}
-        onHistorySearchChange={setHistorySearch}
-        onClearHistory={handleClearHistory}
-        onLoadQuote={handleLoadQuote}
-        onDeleteQuote={handleDeleteQuote}
-        formatDateDDMMYYYY={formatDateDDMMYYYY}
-        formatDateTimeReadable={formatDateTimeReadable}
-      />
+          <QuoteHistory
+            quoteHistory={quoteHistory}
+            filteredHistory={filteredHistory}
+            historySearch={historySearch}
+            onHistorySearchChange={setHistorySearch}
+            onClearHistory={handleClearHistory}
+            onLoadQuote={handleLoadQuote}
+            onDeleteQuote={handleDeleteQuote}
+            formatDateDDMMYYYY={formatDateDDMMYYYY}
+            formatDateTimeReadable={formatDateTimeReadable}
+          />
+        </>
+      )}
 
       {/* Professional Footer */}
       <footer className="bg-gray-950 text-white mt-auto relative overflow-hidden">
