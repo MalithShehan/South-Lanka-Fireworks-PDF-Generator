@@ -35,7 +35,7 @@ const Toast = ({ show, data, onClose }) => {
       setProgress(100);
       return;
     }
-    
+
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -57,19 +57,19 @@ const Toast = ({ show, data, onClose }) => {
 
   const liquidTheme = isError
     ? {
-        icon: <AlertCircle className="w-3.5 h-3.5 text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]" />,
-        pillBg: "bg-rose-500/20 text-rose-300 border-rose-400/30",
-        glow: "rgba(244, 63, 94, 0.25)",
-        progress: "from-rose-500 via-rose-400 to-rose-300",
-      }
+      icon: <AlertCircle className="w-3.5 h-3.5 text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]" />,
+      pillBg: "bg-rose-500/20 text-rose-300 border-rose-400/30",
+      glow: "rgba(244, 63, 94, 0.25)",
+      progress: "from-rose-500 via-rose-400 to-rose-300",
+    }
     : isInfo
-    ? {
+      ? {
         icon: <Info className="w-3.5 h-3.5 text-sky-300 drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]" />,
         pillBg: "bg-sky-500/20 text-sky-300 border-sky-400/30",
         glow: "rgba(56, 189, 248, 0.25)",
         progress: "from-sky-500 via-indigo-400 to-sky-300",
       }
-    : {
+      : {
         icon: <Check className="w-3.5 h-3.5 text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />,
         pillBg: "bg-amber-500/20 text-amber-300 border-amber-400/30",
         glow: "rgba(245, 158, 11, 0.25)",
@@ -412,9 +412,9 @@ const Products = () => {
     const exists = customPackageItems.find(
       (i) => i.id === item.id && i.size === sizeObj.size
     );
-    
+
     let newCartCount = cartCount + 1;
-    
+
     if (exists) {
       setCustomPackageItems(
         customPackageItems.map((i) =>
@@ -512,15 +512,15 @@ const Products = () => {
     setEventDate(loadedEventDate);
     setDiscount(
       inputs.discount ??
-        (typeof quote.totals?.discount === "number"
-          ? String(quote.totals.discount)
-          : "")
+      (typeof quote.totals?.discount === "number"
+        ? String(quote.totals.discount)
+        : "")
     );
     setAdvance(
       inputs.advance ??
-        (typeof quote.totals?.advance === "number"
-          ? String(quote.totals.advance)
-          : "")
+      (typeof quote.totals?.advance === "number"
+        ? String(quote.totals.advance)
+        : "")
     );
     setIncludeGallery(Boolean(quote.includeGallery));
     const bankToggle = inputs.includeBankDetails ?? quote.includeBankDetails;
@@ -669,8 +669,8 @@ const Products = () => {
               newValue === ""
                 ? ""
                 : isNaN(parseFloat(newValue))
-                ? 0
-                : parseFloat(newValue),
+                  ? 0
+                  : parseFloat(newValue),
           };
         }
         return i;
@@ -839,12 +839,12 @@ const Products = () => {
 
     const productImages = includeGallery
       ? await Promise.all(
-          customPackageItems.map(async (item) => {
-            const primary = await loadProductImage(getItemImageSource(item));
-            if (primary) return primary;
-            return loadProductImage(makePlaceholderImage(item.name || "Item"));
-          })
-        )
+        customPackageItems.map(async (item) => {
+          const primary = await loadProductImage(getItemImageSource(item));
+          if (primary) return primary;
+          return loadProductImage(makePlaceholderImage(item.name || "Item"));
+        })
+      )
       : [];
 
     if (bgImg) doc.addImage(bgImg, "PNG", 0, 0, pageWidth, pageHeight);
@@ -857,7 +857,7 @@ const Products = () => {
     doc.setTextColor(255, 255, 255);
     doc.text("South Lanka Fireworks", pageWidth / 2, 16, { align: "center" });
     doc.setFontSize(14);
-    doc.text("INVOICE", pageWidth - 15, 15, { align: "right" });
+    doc.text("QUOTATION", pageWidth - 15, 15, { align: "right" });
 
     let y = 32;
     const iconSize = 4;
@@ -1057,7 +1057,7 @@ const Products = () => {
         1,
         Math.floor(
           (pageHeight - topOffset - footerReserve + verticalGap) /
-            (cardHeight + verticalGap)
+          (cardHeight + verticalGap)
         )
       );
       const cardsPerPage = columns * rowsPerPage;
@@ -1172,11 +1172,10 @@ const Products = () => {
 
       {/* Luxury Sticky Navbar */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-          navScrolled
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${navScrolled
             ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
             : "bg-white/70 backdrop-blur-sm"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
@@ -1200,11 +1199,10 @@ const Products = () => {
               <button
                 type="button"
                 onClick={() => switchStudio("quotation")}
-                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                  activeStudio === "quotation"
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeStudio === "quotation"
                     ? "bg-slate-900 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
-                }`}
+                  }`}
               >
                 <FileText size={14} />
                 <span>Quotation</span>
@@ -1212,11 +1210,10 @@ const Products = () => {
               <button
                 type="button"
                 onClick={() => switchStudio("letterhead")}
-                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                  activeStudio === "letterhead"
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeStudio === "letterhead"
                     ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm"
                     : "text-slate-600 hover:text-indigo-700"
-                }`}
+                  }`}
               >
                 <FileSignature size={14} />
                 <span>Letterhead</span>
@@ -1329,176 +1326,174 @@ const Products = () => {
               background: "linear-gradient(180deg, #f0f4ff 0%, #ffffff 18%, #ffffff 60%, #f8fafc 85%, #f1f5f9 100%)"
             }}
           >
-        {/* Hero Header */}
-        <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12 pt-4 sm:pt-8">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 text-indigo-800 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4 border border-indigo-100 shadow-sm">
-            <Zap size={14} className="text-amber-500" />
-            <span>Sri Lanka's Premier Pyrotechnics • Invoice Studio</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-3 tracking-tight leading-[1.15]">
-            Create Your Bespoke
-            <br className="hidden sm:block" />
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"> Fireworks Quotation</span>
-          </h1>
-
-          <p className="text-slate-500 text-xs sm:text-sm md:text-base max-w-2xl mx-auto mb-6 leading-relaxed px-2">
-            Select items, adjust quantities, add bespoke fireworks with photos from your device, and generate professional PDF invoices in seconds.
-          </p>
-
-          {/* Search Bar */}
-          <div className="max-w-md sm:max-w-lg mx-auto mb-5 px-2">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl opacity-0 group-focus-within:opacity-25 blur transition duration-300" />
-              <div className="relative">
-                <Search
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Search fireworks catalog..."
-                  className="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
-                />
-                {productSearch && (
-                  <button
-                    onClick={() => setProductSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition"
-                  >
-                    <X size={12} className="text-slate-600" />
-                  </button>
-                )}
+            {/* Hero Header */}
+            <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-12 pt-4 sm:pt-8">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 text-indigo-800 px-3.5 py-1.5 rounded-full text-xs font-semibold mb-4 border border-indigo-100 shadow-sm">
+                <Zap size={14} className="text-amber-500" />
+                <span>Sri Lanka's Premier Pyrotechnics • Invoice Studio</span>
               </div>
-            </div>
-          </div>
 
-          {/* Category Tabs */}
-          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-6 px-2 scrollbar-none">
-            {[
-              { id: "all", label: "All Items", icon: "✨" },
-              { id: "shells", label: "Aerial Shells", icon: "🎆" },
-              { id: "cakes", label: "Cakes & Displays", icon: "🎇" },
-              { id: "custom", label: "Custom Bespoke", icon: "💎" },
-            ].map((tab) => {
-              const count = categoryCounts[tab.id];
-              const isActive = activeCategory === tab.id;
-              return (
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-3 tracking-tight leading-[1.15]">
+                Create Your Bespoke
+                <br className="hidden sm:block" />
+                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"> Fireworks Quotation</span>
+              </h1>
+
+              <p className="text-slate-500 text-xs sm:text-sm md:text-base max-w-2xl mx-auto mb-6 leading-relaxed px-2">
+                Select items, adjust quantities, add bespoke fireworks with photos from your device, and generate professional PDF invoices in seconds.
+              </p>
+
+              {/* Search Bar */}
+              <div className="max-w-md sm:max-w-lg mx-auto mb-5 px-2">
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl opacity-0 group-focus-within:opacity-25 blur transition duration-300" />
+                  <div className="relative">
+                    <Search
+                      size={18}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                    <input
+                      type="text"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="Search fireworks catalog..."
+                      className="w-full pl-11 pr-10 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-white text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                    />
+                    {productSearch && (
+                      <button
+                        onClick={() => setProductSearch("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition"
+                      >
+                        <X size={12} className="text-slate-600" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-6 px-2 scrollbar-none">
+                {[
+                  { id: "all", label: "All Items", icon: "✨" },
+                  { id: "shells", label: "Aerial Shells", icon: "🎆" },
+                  { id: "cakes", label: "Cakes & Displays", icon: "🎇" },
+                  { id: "custom", label: "Custom Bespoke", icon: "💎" },
+                ].map((tab) => {
+                  const count = categoryCounts[tab.id];
+                  const isActive = activeCategory === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveCategory(tab.id)}
+                      className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap active:scale-95 ${isActive
+                          ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 scale-[1.02]"
+                          : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80 shadow-xs"
+                        }`}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
+                          }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick Metrics Cards */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 px-2">
+                <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-indigo-200 transition-all">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-xs">
+                    <Package size={14} className="text-white" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Catalog</span>
+                    <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{products.length}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-pink-200 transition-all">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-xs">
+                    <ShoppingCart size={14} className="text-white" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">In Cart</span>
+                    <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{cartCount}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-emerald-200 transition-all">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-xs">
+                    <FileText size={14} className="text-white" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Saved Quotes</span>
+                    <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{quoteHistory.length}</span>
+                  </div>
+                </div>
+
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveCategory(tab.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap active:scale-95 ${
-                    isActive
-                      ? "bg-slate-900 text-white shadow-md shadow-slate-900/20 scale-[1.02]"
-                      : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80 shadow-xs"
-                  }`}
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
                 >
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isActive ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {count}
-                  </span>
+                  <Plus size={14} />
+                  <span>Add Custom Entry</span>
                 </button>
-              );
-            })}
-          </div>
 
-          {/* Quick Metrics Cards */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4 px-2">
-            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-indigo-200 transition-all">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-xs">
-                <Package size={14} className="text-white" />
-              </div>
-              <div className="text-left">
-                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Catalog</span>
-                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{products.length}</span>
+                <button
+                  onClick={() => switchStudio("letterhead")}
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
+                >
+                  <FileSignature size={14} />
+                  <span>Create Letterhead</span>
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-pink-200 transition-all">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center shadow-xs">
-                <ShoppingCart size={14} className="text-white" />
-              </div>
-              <div className="text-left">
-                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">In Cart</span>
-                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{cartCount}</span>
-              </div>
-            </div>
+            <ProductGrid
+              products={displayProducts}
+              productVariants={productVariants}
+              onAddToCart={addToCustomPackage}
+              onAddCustomItem={() => setShowAddModal(true)}
+              onDeleteCustomProduct={handleDeleteCustomProduct}
+            />
 
-            <div className="flex items-center gap-2 sm:gap-2.5 bg-white rounded-xl px-3 sm:px-4 py-2 shadow-xs border border-slate-100 hover:border-emerald-200 transition-all">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-xs">
-                <FileText size={14} className="text-white" />
-              </div>
-              <div className="text-left">
-                <span className="block text-[10px] sm:text-xs text-slate-400 font-medium leading-tight">Saved Quotes</span>
-                <span className="block text-xs sm:text-sm font-bold text-slate-800 tabular-nums">{quoteHistory.length}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
-            >
-              <Plus size={14} />
-              <span>Add Custom Entry</span>
-            </button>
-
-            <button
-              onClick={() => switchStudio("letterhead")}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl px-3 sm:px-4 py-2 shadow-xs font-bold text-xs sm:text-sm transition-all active:scale-95"
-            >
-              <FileSignature size={14} />
-              <span>Create Letterhead</span>
-            </button>
-          </div>
-        </div>
-
-        <ProductGrid
-          products={displayProducts}
-          productVariants={productVariants}
-          onAddToCart={addToCustomPackage}
-          onAddCustomItem={() => setShowAddModal(true)}
-          onDeleteCustomProduct={handleDeleteCustomProduct}
-        />
-
-        <CustomPackageEditor
-          items={customPackageItems}
-          onNameChange={updateCustomPackageName}
-          onSizeChange={updateCustomPackageSize}
-          onPriceChange={updateCustomPackagePrice}
-          onQtyChange={updateCustomPackageQty}
-          onRemoveItem={removeFromCustomPackage}
-          onClearCart={handleClearCart}
-          pdfName={pdfName}
-          onPdfNameChange={setPdfName}
-          invoiceTo={invoiceTo}
-          onInvoiceToChange={setInvoiceTo}
-          invoiceDate={invoiceDate}
-          onInvoiceDateChange={setInvoiceDate}
-          eventDate={eventDate}
-          onEventDateChange={setEventDate}
-          includeEventDate={includeEventDate}
-          onIncludeEventDateChange={setIncludeEventDate}
-          includeBankDetails={includeBankDetails}
-          onIncludeBankDetailsChange={setIncludeBankDetails}
-          bankDetails={BANK_DETAILS}
-          includeGallery={includeGallery}
-          onIncludeGalleryChange={setIncludeGallery}
-          discount={discount}
-          onDiscountChange={setDiscount}
-          advance={advance}
-          onAdvanceChange={setAdvance}
-          subTotal={subTotal}
-          totalAfterDiscount={totalAfterDiscount}
-          balanceDue={balanceDue}
-          onGenerateReport={generateReport}
-        />
-      </section>
+            <CustomPackageEditor
+              items={customPackageItems}
+              onNameChange={updateCustomPackageName}
+              onSizeChange={updateCustomPackageSize}
+              onPriceChange={updateCustomPackagePrice}
+              onQtyChange={updateCustomPackageQty}
+              onRemoveItem={removeFromCustomPackage}
+              onClearCart={handleClearCart}
+              pdfName={pdfName}
+              onPdfNameChange={setPdfName}
+              invoiceTo={invoiceTo}
+              onInvoiceToChange={setInvoiceTo}
+              invoiceDate={invoiceDate}
+              onInvoiceDateChange={setInvoiceDate}
+              eventDate={eventDate}
+              onEventDateChange={setEventDate}
+              includeEventDate={includeEventDate}
+              onIncludeEventDateChange={setIncludeEventDate}
+              includeBankDetails={includeBankDetails}
+              onIncludeBankDetailsChange={setIncludeBankDetails}
+              bankDetails={BANK_DETAILS}
+              includeGallery={includeGallery}
+              onIncludeGalleryChange={setIncludeGallery}
+              discount={discount}
+              onDiscountChange={setDiscount}
+              advance={advance}
+              onAdvanceChange={setAdvance}
+              subTotal={subTotal}
+              totalAfterDiscount={totalAfterDiscount}
+              balanceDue={balanceDue}
+              onGenerateReport={generateReport}
+            />
+          </section>
 
           <QuoteHistory
             quoteHistory={quoteHistory}
@@ -1518,7 +1513,7 @@ const Products = () => {
       <footer className="bg-gray-950 text-white mt-auto relative overflow-hidden">
         {/* Decorative gradient line */}
         <div className="h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600" />
-        
+
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 relative">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
             {/* Brand */}
@@ -1599,9 +1594,8 @@ const Products = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className={`fixed ${
-              cartCount > 0 ? "bottom-[86px] md:bottom-6" : "bottom-6"
-            } right-4 sm:right-6 z-50 w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl ring-4 ring-white/20 flex items-center justify-center transition-all active:scale-95`}
+            className={`fixed ${cartCount > 0 ? "bottom-[86px] md:bottom-6" : "bottom-6"
+              } right-4 sm:right-6 z-50 w-11 h-11 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xl hover:shadow-2xl ring-4 ring-white/20 flex items-center justify-center transition-all active:scale-95`}
             aria-label="Scroll to top"
           >
             <ArrowUp size={20} className="text-white" />
